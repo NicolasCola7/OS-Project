@@ -1,74 +1,51 @@
 package progetto;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.Scanner;
 
 public class Server {
- private static List<ClientHandler> clients = Collections.synchronizedList(new ArrayList<>());
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Usage: java Server <port>");
+            return;
+        }
 
- public static void main(String[] args) {
-     int port = 90;
+        int port = Integer.parseInt(args[0]);
+        Scanner userInput = new Scanner(System.in);
 
-     try (ServerSocket serverSocket = new ServerSocket(port)) {
-         System.out.println("Server in ascolto sulla porta " + port);
+        try {
+            ServerSocket server = new ServerSocket(port);
+            /*
+             * deleghiamo a un altro thread la gestione di tutte le connessioni; nel thread
+             * principale ascoltiamo solo l'input da tastiera dell'utente (in caso voglia
+             * chiudere il programma)
+             */
+            Thread serverThread = new Thread(new SocketListener(server));
+            serverThread.start();
 
-         while (true) {
-             Socket clientSocket = serverSocket.accept();
-             ClientHandler clientHandler = new ClientHandler(clientSocket);
-             clients.add(clientHandler);
-             new Thread(clientHandler).start();
-         }
-     } catch (IOException e) {
-         System.out.println("Errore di avvio del server sulla porta " + port);
-         e.printStackTrace();
-     }
- }
+            String command = "";
 
- static class ClientHandler implements Runnable {
-     private Socket socket;
-     private BufferedReader in;
-     private PrintWriter out;
+            while (!command.equals("quit")) {
+                command = userInput.nextLine();
+            }
 
-     public ClientHandler(Socket socket) {
-         this.socket = socket;
-         try {
-             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             this.out = new PrintWriter(socket.getOutputStream(), true);
-         } catch (IOException e) {
-             System.out.println("Errore di connessione con il client");
-             e.printStackTrace();
-         }
-     }
-
-     public void run() {
-         try {
-             String message;
-             while ((message = in.readLine()) != null) {
-                 System.out.println("Ricevuto dal client " + socket.getInetAddress().getHostAddress() + ": " + message);
-                 sendToOtherClients(message);
-             }
-         } catch (IOException e) {
-             System.out.println("Errore di comunicazione con il client");
-             e.printStackTrace();
-         } finally {
-             try {
-                 socket.close();
-             } catch (IOException e) {
-                 e.printStackTrace();
-             }
-         }
-     }
-
-     private void sendToOtherClients(String message) {
-         synchronized (clients) {
-             for (ClientHandler client : clients) {
-                 if (client != this) {
-                     client.out.println("Messaggio da " + socket.getInetAddress().getHostAddress() + ": " + message);
-                 }
-             }
-         }
-     }
- }
+            try {
+                serverThread.interrupt();
+                /* attendi la terminazione del thread */
+                serverThread.join();
+            } catch (InterruptedException e) {
+                /*
+                 * se qualcuno interrompe questo thread nel frattempo, terminiamo
+                 */
+                return;
+            }
+            System.out.println("Main thread terminated.");
+        } catch (IOException e) {
+            System.err.println("IOException caught: " + e);
+            e.printStackTrace();
+        } finally {
+            userInput.close();
+        }
+    }
 }
-
