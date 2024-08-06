@@ -6,7 +6,9 @@ import java.util.Scanner;
 
 public class Server {
     public static void main(String[] args) {
-        if (args.length < 1) {
+        args = new String[1];
+        args[0]= "9000";
+    	if (args.length < 1) {
             System.err.println("Usage: java Server <port>");
             return;
         }

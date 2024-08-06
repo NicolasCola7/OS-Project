@@ -3,6 +3,7 @@ package progetto;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -11,7 +12,7 @@ public class ClientHandler implements Runnable {
     Socket s;
     /* possiamo avere una hashmap per ogni thread, o condividerla tra tutti */
     HashMap<String, String> information = new HashMap<String, String>();
-
+	Resource topic =new Resource();
     public ClientHandler(Socket s) {
         this.s = s;
         information.put("important", "Incredibly important bit of information about everything");
@@ -46,6 +47,18 @@ public class ClientHandler implements Runnable {
                                 to.println("No key");
                             }
                             break;
+                        case "publisher":
+                        	to.println("prova");
+                        	if (parts.length > 1) {
+                            	String key=parts[1];
+                            	topic.add(key);
+                            	to.println("Debug topic");
+                            }
+                        	break;
+                        case "listAll":
+                        	String allKey=topic.getAllKey();
+                        	to.println(allKey);
+                        	break;
 
                         default:
                             to.println("Unknown cmd");
@@ -62,7 +75,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
             e.printStackTrace();
-        }
+        } catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     }
 
 }
