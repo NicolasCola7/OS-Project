@@ -9,10 +9,10 @@ import java.util.Scanner;
 
 public class ClientHandler implements Runnable {
 
-    Socket s;
+    static Socket s;
     /* possiamo avere una hashmap per ogni thread, o condividerla tra tutti */
     HashMap<String, String> information = new HashMap<String, String>();
-	Resource topic =new Resource();
+	static Resource topic =new Resource();
     public ClientHandler(Socket s) {
         this.s = s;
         information.put("important", "Incredibly important bit of information about everything");
@@ -38,27 +38,26 @@ public class ClientHandler implements Runnable {
                         case "quit":
                             closed = true;
                             break;
-                        case "info":
-                            if (parts.length > 1) {
-                                String key = parts[1];
-                                String response = information.getOrDefault(key, "Error!");
-                                to.println(response);
-                            } else {
-                                to.println("No key");
-                            }
-                            break;
-                        case "publisher":
-                        	to.println("prova");
+                        case "publish":
                         	if (parts.length > 1) {
-                            	String key=parts[1];
-                            	topic.add(key);
-                            	to.println("Debug topic");
-                            }
+                        		String key=parts[1];
+                            	if(!topic.containsKey(parts[1])) {
+                            		topic.add(key);
+                            		to.println("Accesso come Publisher avvenuto con successo. \nIl topic: "+ key+ " non precedentemente esisteste è stato  creato");
+                            		gestisciPublisher(key);
+                            	}
+                            	else {
+                            		to.println("Accesso come Publisher avvenuto con successo. \nIl topic: "+ key + "precedentemente esisteste");
+                            		gestisciPublisher(key);
+                            	}
+                        	}
                         	break;
                         case "listAll":
                         	String allKey=topic.getAllKey();
                         	to.println(allKey);
                         	break;
+                        case "subscribe":
+                        	
 
                         default:
                             to.println("Unknown cmd");
@@ -80,6 +79,56 @@ public class ClientHandler implements Runnable {
 		}
     }
 
+    public static void gestisciPublisher(String key) throws InterruptedException {
+    	try {
+            Scanner from = new Scanner(s.getInputStream());
+            PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+
+            System.out.println("Thread " + Thread.currentThread() + " listening...");
+
+            boolean closed = false;
+            while (!closed) {
+                String request = from.nextLine();
+                if (!Thread.interrupted()) {
+                    System.out.println("Request: " + request);
+                    String[] parts = request.split(" ");
+                    switch (parts[0]) {
+                        case "quit":
+                            closed = true;
+                            break;
+                        case "send":
+                        	if (parts.length > 1) {
+                        		topic.addStringToKey(key,parts[1]);
+                        	}
+                        	break;
+                        	
+                        	
+                        case "list":
+                        	String message=topic.printAllStrings(key);
+                        	to.print(message);
+                        	break;
+                        	
+                        	
+                        default:
+                            to.println("Unknown cmd");
+                    }
+                } else {
+                    to.println("quit");
+                    break;
+                }
+            }
+
+            to.println("quit");
+            s.close();
+            System.out.println("Closed");
+        } catch (IOException e) {
+            System.err.println("ClientHandler: IOException caught: " + e);
+            e.printStackTrace();
+        }
+    }
 }
+
+    
+
 
     

@@ -43,5 +43,30 @@ public class Resource {
 
         return message;
     }
-
+    
+    public synchronized boolean containsKey(String key) {
+        return this.information.containsKey(key);
+    }
+    
+    
+    public synchronized void addStringToKey(String key, String value) throws InterruptedException {
+        while (!this.information.containsKey(key)) {
+            wait();
+        }
+        this.information.get(key).add(value);
+        notifyAll();
+    }
+    
+    public synchronized String printAllStrings(String key) throws InterruptedException {
+    	String x="";
+    	while (this.information.get(key).isEmpty()) {
+            wait();
+        }
+        ArrayList<String> result = this.information.get(key);
+        for (String s : result) {
+        	x+=s +"\n";
+        }
+        notifyAll();
+        return x;
+    }
 }
