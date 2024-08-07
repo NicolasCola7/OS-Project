@@ -52,7 +52,7 @@ public class ClientHandler implements Runnable {
                             	}
                         	}
                         	break;
-                        case "listAll":
+                        case "show":
                         	String allKey=topic.getAllKey();
                         	to.println(allKey);
                         	break;
