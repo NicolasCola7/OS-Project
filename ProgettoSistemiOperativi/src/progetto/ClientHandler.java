@@ -91,7 +91,7 @@ public class ClientHandler implements Runnable {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
                     System.out.println("Request: " + request);
-                    String[] parts = request.split(" ");
+                    String[] parts = request.trim().split(" ");
                     options: switch (parts[0]) {
                         case "quit":
                             closed = true;
@@ -99,13 +99,14 @@ public class ClientHandler implements Runnable {
                         case "send":
                         	if (parts.length > 1) {
                         		topic.addStringToKey(key,parts[1]);
+                        		to.println("Messagio inviato con successo sul topic");
                         	}
                         	break options;
                         	
                         	
                         case "list":
                         	String message=topic.printAllStrings(key);
-                        	to.print(message);
+                        	to.println("Messaggi: "+ message.trim());
                         	break options;
                         	
                         	
