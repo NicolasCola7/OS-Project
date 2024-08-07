@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable {
                 if (!Thread.interrupted()) {
                     System.out.println("Request: " + request);
                     String[] parts = request.split(" ");
-                    switch (parts[0]) {
+                    options: switch (parts[0]) {
                         case "quit":
                             closed = true;
                             break;
@@ -100,13 +100,13 @@ public class ClientHandler implements Runnable {
                         	if (parts.length > 1) {
                         		topic.addStringToKey(key,parts[1]);
                         	}
-                        	break;
+                        	break options;
                         	
                         	
                         case "list":
                         	String message=topic.printAllStrings(key);
                         	to.print(message);
-                        	break;
+                        	break options;
                         	
                         	
                         default:
