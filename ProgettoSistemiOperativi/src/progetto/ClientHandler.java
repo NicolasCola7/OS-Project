@@ -3,22 +3,20 @@ package progetto;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class ClientHandler implements Runnable, ResourceListener {
 
     private Socket s;
-    private HashMap<String, String> information = new HashMap<>();
     public static Resource topic = new Resource();
     private boolean subscriberActive = false; // Variabile di stato per il subscriber
     private String subscriberKey;
 
     public ClientHandler(Socket s) {
         this.s = s;
-        information.put("important", "Incredibly important bit of information about everything");
-        information.put("random", "Random bit of information about something");
-        information.put("shadow", "The outer part of a shadow is called the penumbra");
+ 
         topic.addListener(this); // Registrazione come listener
     }
 
@@ -93,21 +91,21 @@ public class ClientHandler implements Runnable, ResourceListener {
         try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
-
+            ArrayList<Message> currentClientMessages=new ArrayList<Message>();
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
             boolean closed = false;
             while (!closed) {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
-                    System.out.println("Request: " + request);
+                    System.out.println(request);
                     String[] parts = request.trim().split(" ");
                     options:
                     switch (parts[0]) {
                         case "quit":
                             closed = true;
                             break;
-                        case "send":
+                        case "send":{
                             if (parts.length > 1) {
                             	String message="";
                             	for(int i=1; i<parts.length;i++) {
@@ -115,13 +113,23 @@ public class ClientHandler implements Runnable, ResourceListener {
                             	}
                             	Message messageFinal=new Message(topic.getSize(key)+1,message);
                                 topic.addStringToKey(key, messageFinal);
+                                currentClientMessages.add(messageFinal);
                                 to.println("Messaggio inviato con successo sul topic");
                             }
                             break options;
-                        case "list":
-                            String message = topic.printAllStrings(key);
-                            to.println("Messaggi: " + message.trim());
+                        }
+                        case "list":{
+                            String message = topic.list(currentClientMessages);
+                            to.println(message.trim());
                             break options;
+                        }
+                            
+                        case "listall":{
+                            String message = topic.listAll(key);
+                            to.println(message.trim());
+                            break options;
+                        }
+                        
                         default:
                             to.println("Unknown cmd");
                     }

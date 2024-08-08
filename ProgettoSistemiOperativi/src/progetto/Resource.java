@@ -25,11 +25,10 @@ public class Resource {
 
  public synchronized String getAllKey() {
      StringBuilder allKey = new StringBuilder();
-     allKey.append("Topics\n");
      for (String key : information.keySet()) {
-         allKey.append(key).append("\n");
+         allKey.append("-" + key).append("\n");
      }
-     return allKey.toString().trim();
+     return  allKey.isEmpty() ? "Nessun topic esistente" : "TOPICS:  \n " + allKey.toString().trim();
  }
 
  public synchronized String listAll(String key) throws InterruptedException {
@@ -38,7 +37,21 @@ public class Resource {
      }
      ArrayList<Message> result = this.information.get(key);
      StringBuilder message = new StringBuilder();
+     message.append("MESSAGGI: \n");
      for (Message s : result) {
+         message.append(s).append("\n");
+     }
+     notifyAll();
+     return message.toString();
+ }
+ 
+ public synchronized String list(ArrayList<Message> currenClientMessages) throws InterruptedException {
+     while (currenClientMessages.isEmpty()) {
+         wait();
+     }
+     StringBuilder message = new StringBuilder();
+     message.append("MESSAGGI: \n");
+     for (Message s : currenClientMessages) {
          message.append(s).append("\n");
      }
      notifyAll();
@@ -58,19 +71,6 @@ public class Resource {
      notifyListeners(key, value); // Notifica i listener quando viene aggiunto un valore
  }
 
- public synchronized String printAllStrings(String key) throws InterruptedException {
-     StringBuilder x = new StringBuilder();
-     x.append("Messaggi inviati:\n");
-     while (this.information.get(key).isEmpty()) {
-         wait();
-     }
-     ArrayList<Message> result = this.information.get(key);
-     for (Message s : result) {
-         x.append(s.toString()).append("\n");
-     }
-     notifyAll();
-     return x.toString();
- }
 
  // Aggiungi un listener
  public synchronized void addListener(ResourceListener listener) {

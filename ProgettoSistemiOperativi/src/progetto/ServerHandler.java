@@ -25,7 +25,7 @@ public class ServerHandler implements Runnable {
             boolean closed = false;
             while (!closed) {
                 String request = from.nextLine();
-                System.out.println("Received request: " + request); // Debug
+                System.out.println(request); // Debug
                 if (!Thread.interrupted()) {
                     String[] parts = request.split(" ");
                     if (parts.length == 0) {
@@ -85,7 +85,7 @@ public class ServerHandler implements Runnable {
                     break;
                 case "listall":
                     try {
-                        String allMessage = topic.printAllStrings(key);
+                        String allMessage = topic.listAll(key);
                         to.println(allMessage);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
