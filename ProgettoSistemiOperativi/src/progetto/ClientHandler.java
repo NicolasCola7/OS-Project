@@ -3,21 +3,23 @@ package progetto;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable, ResourceListener {
 
-    static Socket s;
-    /* possiamo avere una hashmap per ogni thread, o condividerla tra tutti */
-    HashMap<String, String> information = new HashMap<String, String>();
-	static Resource topic =new Resource();
+    private Socket s;
+    private HashMap<String, String> information = new HashMap<>();
+    private static Resource topic = new Resource();
+    private boolean subscriberActive = false; // Variabile di stato per il subscriber
+    private String subscriberKey;
+
     public ClientHandler(Socket s) {
         this.s = s;
         information.put("important", "Incredibly important bit of information about everything");
         information.put("random", "Random bit of information about something");
         information.put("shadow", "The outer part of a shadow is called the penumbra");
+        topic.addListener(this); // Registrazione come listener
     }
 
     @Override
@@ -39,36 +41,34 @@ public class ClientHandler implements Runnable {
                             closed = true;
                             break;
                         case "publish":
-                        	if (parts.length > 1) {
-                        		String key=parts[1];
-                            	if(!topic.containsKey(parts[1])) {
-                            		topic.add(key);
-                            		to.println("Accesso come Publisher avvenuto con successo. \nIl topic: "+ key+ " non precedentemente esistente è stato  creato");
-                            		gestisciPublisher(key);
-                            	}
-                            	else {
-                            		to.println("Accesso come Publisher avvenuto con successo. \nIl topic: "+ key + "precedentemente esistente");
-                            		gestisciPublisher(key);
-                            	}
-                        	}
-                        	break;
+                            if (parts.length > 1) {
+                                String key = parts[1];
+                                if (!topic.containsKey(parts[1])) {
+                                    topic.add(key);
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + key + " non precedentemente esistente è stato creato");
+                                    gestisciPublisher(key);
+                                } else {
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + key + " precedentemente esistente");
+                                    gestisciPublisher(key);
+                                }
+                            }
+                            break;
                         case "show":
-                        	String allKey=topic.getAllKey();
-                        	to.println(allKey);
-                        	break;
+                            String allKey = topic.getAllKey();
+                            to.println(allKey);
+                            break;
                         case "subscribe":
-                        	if (parts.length > 1) {
-                        		String key=parts[1];
-                            	if(topic.containsKey(parts[1])) {                            		
-                            		to.println("Accesso come Subscriber avvenuto con successo al topic "+key);
-                            		gestisciSubscriber(key);
-                            	}
-                            	else {
-                            		to.println("Accesso come Subscriber fallito, il topic "+ key + " non esiste");                           		
-                            	}
-                        	}
-                        	break;
-
+                            if (parts.length > 1) {
+                                String key = parts[1];
+                                if (topic.containsKey(parts[1])) {
+                                    to.println("Accesso come Subscriber avvenuto con successo al topic " + key);
+                                    subscriberKey = key;
+                                    gestisciSubscriber(key);
+                                } else {
+                                    to.println("Accesso come Subscriber fallito, il topic " + key + " non esiste");
+                                }
+                            }
+                            break;
                         default:
                             to.println("Unknown cmd");
                     }
@@ -85,12 +85,12 @@ public class ClientHandler implements Runnable {
             System.err.println("ClientHandler: IOException caught: " + e);
             e.printStackTrace();
         } catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+            e.printStackTrace();
+        }
     }
 
-    public static void gestisciPublisher(String key) throws InterruptedException {
-    	try {
+    public void gestisciPublisher(String key) throws InterruptedException {
+        try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
 
@@ -102,24 +102,21 @@ public class ClientHandler implements Runnable {
                 if (!Thread.interrupted()) {
                     System.out.println("Request: " + request);
                     String[] parts = request.trim().split(" ");
-                    options: switch (parts[0]) {
+                    options:
+                    switch (parts[0]) {
                         case "quit":
                             closed = true;
                             break;
                         case "send":
-                        	if (parts.length > 1) {
-                        		topic.addStringToKey(key,parts[1]);
-                        		to.println("Messagio inviato con successo sul topic");
-                        	}
-                        	break options;
-                        	
-                        	
+                            if (parts.length > 1) {
+                                topic.addStringToKey(key, parts[1]);
+                                to.println("Messaggio inviato con successo sul topic");
+                            }
+                            break options;
                         case "list":
-                        	String message=topic.printAllStrings(key);
-                        	to.println("Messaggi: "+ message.trim());
-                        	break options;
-                        	
-                        	
+                            String message = topic.printAllStrings(key);
+                            to.println("Messaggi: " + message.trim());
+                            break options;
                         default:
                             to.println("Unknown cmd");
                     }
@@ -137,10 +134,10 @@ public class ClientHandler implements Runnable {
             e.printStackTrace();
         }
     }
-    
-    public static void gestisciSubscriber(String key) throws InterruptedException{
-    	
-    	try {
+
+    public void gestisciSubscriber(String key) throws InterruptedException {
+        subscriberActive = true; // Imposta lo stato attivo per il subscriber
+        try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
 
@@ -152,17 +149,14 @@ public class ClientHandler implements Runnable {
                 if (!Thread.interrupted()) {
                     System.out.println("Request: " + request);
                     String[] parts = request.trim().split(" ");
-                    options: switch (parts[0]) {
+                    options:
+                    switch (parts[0]) {
                         case "quit":
-                        	
                             closed = true;
                             break;
-                            
-                        case "listall":                     
-                        	
-                        	to.println(topic.listAll(key));
-                        	break options;
-                       
+                        case "listall":
+                            to.println(topic.listAll(key));
+                            break options;
                         default:
                             to.println("Unknown cmd");
                     }
@@ -178,12 +172,21 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
             e.printStackTrace();
+        } finally {
+            subscriberActive = false; // Imposta lo stato come inattivo per il subscriber
         }
     }
-    	
-   }
 
-    
+    @Override
+    public void onValueAdded(String key, String value) {
+        if (subscriberActive && key.equals(subscriberKey)) {
+            try {
+                PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+                to.println("Nuovo messaggio sul topic " + key + ": " + value);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
 
-
-    
