@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class ServerHandler implements Runnable {
 
     private Socket s;
-    private Resource topic = ClientHandler.topic;
+    private Resource topic = ClientHandler.topics;
 
     public ServerHandler(Socket s) {
         this.s = s;
@@ -38,7 +38,7 @@ public class ServerHandler implements Runnable {
                             closed = true;
                             break;}
                         case "show":{
-                            String allKey = topic.getAllKey();
+                            String allKey = topic.show();
                             to.println(allKey);
                             break;}
                         case "inspect":{

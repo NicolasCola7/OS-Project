@@ -45,7 +45,7 @@ public class Message {
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	        return 	"-Id: " + id + "\n" +
 	        		"Testo: " + text +	"\n"+
-	               "Data: " + date.format(formatter);
+	               "Data: " + date.format(formatter) + "\n";
 	               
 	    }
 	 
