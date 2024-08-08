@@ -15,6 +15,9 @@ public class Resource {
  	}
 
  	public synchronized void add(String topic) throws InterruptedException {
+ 		while (this.topics.get(topic) != null) {
+ 	         wait();
+ 	     }
  		ArrayList<Message> value = new ArrayList<>();
  		this.topics.put(topic, value);
  		notifyAll();
@@ -29,6 +32,9 @@ public class Resource {
  	}
 
  	public synchronized String listAll(String topic) throws InterruptedException {
+ 		 while (this.topics.get(topic).isEmpty()) {
+ 	         wait();
+ 	     }
  		ArrayList<Message> result = this.topics.get(topic);
  		StringBuilder message = new StringBuilder();
  		if(!topics.get(topic).isEmpty()) {
@@ -42,6 +48,9 @@ public class Resource {
  	}
  
  	public synchronized String list(ArrayList<Message> currentClientMessages) throws InterruptedException {
+ 		while (currentClientMessages.isEmpty()) {
+ 	         wait();
+ 	     }
  		StringBuilder message = new StringBuilder();
  		if(!currentClientMessages.isEmpty()) {
 			message.append("MESSAGGI: \n");
@@ -58,6 +67,10 @@ public class Resource {
  	}
 
  	public synchronized void addMessageToTopic(String topic, Message msg) throws InterruptedException {
+ 		
+ 		while (!this.topics.containsKey(topic)) {
+ 	         wait();
+ 	     }
 
  		this.topics.get(topic).add(msg);
  		notifyAll();
