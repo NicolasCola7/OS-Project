@@ -10,7 +10,7 @@ public class ClientHandler implements Runnable, ResourceListener {
 
     private Socket s;
     private HashMap<String, String> information = new HashMap<>();
-    private static Resource topic = new Resource();
+    public static Resource topic = new Resource();
     private boolean subscriberActive = false; // Variabile di stato per il subscriber
     private String subscriberKey;
 
@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
                     System.out.println("Request: " + request);
-                    String[] parts = request.split(" ");
+                    String[] parts = request.trim().split(" ");
                     switch (parts[0]) {
                         case "quit":
                             closed = true;
@@ -187,7 +187,7 @@ public class ClientHandler implements Runnable, ResourceListener {
         if (subscriberActive && key.equals(subscriberKey)) {
             try {
                 PrintWriter to = new PrintWriter(s.getOutputStream(), true);
-                to.println("Nuovo messaggio sul topic " + key + ": " + value);
+                to.println("Nuovo messaggio sul topic " + key + ":\n" + value);
             } catch (IOException e) {
                 e.printStackTrace();
             }

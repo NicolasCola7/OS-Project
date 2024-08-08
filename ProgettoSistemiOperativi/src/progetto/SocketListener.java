@@ -18,9 +18,9 @@ public class SocketListener implements Runnable {
   public void run() {
       try {
           this.server.setSoTimeout(5000);
+          System.out.println("Waiting for a new client...");
           while (!Thread.interrupted()) {
               try {
-                  System.out.println("Waiting for a new client...");
                   /*
                    * Questa istruzione è bloccante, a prescindere da Thread.interrupt(). Occorre
                    * quindi controllare, una volta accettata la connessione, che il server non sia
@@ -47,7 +47,6 @@ public class SocketListener implements Runnable {
                   }
               } catch (SocketTimeoutException e) {
                   /* in caso di timeout procediamo semplicemente con l'esecuzione */
-                  System.out.println("Timeout, continuing...");
                   continue;
               } catch (IOException e) {
                   /*

@@ -25,6 +25,7 @@ public class Resource {
 
  public synchronized String getAllKey() {
      StringBuilder allKey = new StringBuilder();
+     allKey.append("Topics\n");
      for (String key : information.keySet()) {
          allKey.append(key).append("\n");
      }
@@ -59,6 +60,7 @@ public class Resource {
 
  public synchronized String printAllStrings(String key) throws InterruptedException {
      StringBuilder x = new StringBuilder();
+     x.append("Messaggi inviati:\n");
      while (this.information.get(key).isEmpty()) {
          wait();
      }
@@ -84,7 +86,9 @@ public class Resource {
  public synchronized int getSize(String key) {
 	        return this.information.get(key).size();
 	}
-
+ public synchronized void remove(String key, int id) {
+	 this.information.get(key).remove(id);
+ }
  
 }
 
