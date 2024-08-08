@@ -109,7 +109,12 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                         case "send":
                             if (parts.length > 1) {
-                                topic.addStringToKey(key, parts[1]);
+                            	String message="";
+                            	for(int i=1; i<parts.length;i++) {
+                            		message+=parts[i];
+                            	}
+                            	Message messageFinal=new Message(topic.getSize(key)+1,message);
+                                topic.addStringToKey(key, messageFinal);
                                 to.println("Messaggio inviato con successo sul topic");
                             }
                             break options;
@@ -178,7 +183,7 @@ public class ClientHandler implements Runnable, ResourceListener {
     }
 
     @Override
-    public void onValueAdded(String key, String value) {
+    public void onValueAdded(String key, Message value) {
         if (subscriberActive && key.equals(subscriberKey)) {
             try {
                 PrintWriter to = new PrintWriter(s.getOutputStream(), true);
@@ -187,6 +192,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                 e.printStackTrace();
             }
         }
-    }
-}
+    
+    	}
+	}
 

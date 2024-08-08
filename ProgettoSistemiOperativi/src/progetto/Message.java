@@ -43,9 +43,10 @@ public class Message {
 	 @Override
 	    public String toString() {
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	        return "Id: " + id + "\n" +
-	               "Data: " + date.format(formatter) + "\n" +
-	               "Testo: " + text;
+	        return 	"Testo: " + text +	"\n"+
+	        		"Id: " + id + "\n" +
+	               "Data: " + date.format(formatter);
+	               
 	    }
 	 
 }

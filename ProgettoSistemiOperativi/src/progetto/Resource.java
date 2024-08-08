@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Resource {
- private HashMap<String, ArrayList<String>> information;
+ private HashMap<String, ArrayList<Message>> information;
  private List<ResourceListener> listeners;
 
  public Resource() {
@@ -18,7 +18,7 @@ public class Resource {
      while (this.information.get(key) != null) {
          wait();
      }
-     ArrayList<String> value = new ArrayList<>();
+     ArrayList<Message> value = new ArrayList<>();
      this.information.put(key, value);
      notifyAll();
  }
@@ -35,9 +35,9 @@ public class Resource {
      while (this.information.get(key).isEmpty()) {
          wait();
      }
-     ArrayList<String> result = this.information.get(key);
+     ArrayList<Message> result = this.information.get(key);
      StringBuilder message = new StringBuilder();
-     for (String s : result) {
+     for (Message s : result) {
          message.append(s).append("\n");
      }
      notifyAll();
@@ -48,7 +48,7 @@ public class Resource {
      return this.information.containsKey(key);
  }
 
- public synchronized void addStringToKey(String key, String value) throws InterruptedException {
+ public synchronized void addStringToKey(String key, Message value) throws InterruptedException {
      while (!this.information.containsKey(key)) {
          wait();
      }
@@ -62,9 +62,9 @@ public class Resource {
      while (this.information.get(key).isEmpty()) {
          wait();
      }
-     ArrayList<String> result = this.information.get(key);
-     for (String s : result) {
-         x.append(s).append("\n");
+     ArrayList<Message> result = this.information.get(key);
+     for (Message s : result) {
+         x.append(s.toString()).append("\n");
      }
      notifyAll();
      return x.toString();
@@ -76,14 +76,19 @@ public class Resource {
  }
 
  // Notifica i listener
- private void notifyListeners(String key, String value) {
+ private void notifyListeners(String key, Message value) {
      for (ResourceListener listener : listeners) {
          listener.onValueAdded(key, value);
      }
  }
+ public synchronized int getSize(String key) {
+	        return this.information.get(key).size();
+	}
+
+ 
 }
 
 //Interfaccia per i listener
 interface ResourceListener {
- void onValueAdded(String key, String value);
+ void onValueAdded(String key, Message value);
 }
