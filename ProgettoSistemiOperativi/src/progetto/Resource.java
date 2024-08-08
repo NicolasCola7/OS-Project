@@ -9,86 +9,99 @@ public class Resource {
  private HashMap<String, ArrayList<Message>> information;
  private List<ResourceListener> listeners;
 
- public Resource() {
-     this.information = new HashMap<>();
-     this.listeners = new ArrayList<>();
- }
+ 	public Resource() {
+ 		this.information = new HashMap<>();
+ 			this.listeners = new ArrayList<>();
+ 	}
 
- public synchronized void add(String key) throws InterruptedException {
-     while (this.information.get(key) != null) {
-         wait();
-     }
-     ArrayList<Message> value = new ArrayList<>();
-     this.information.put(key, value);
-     notifyAll();
- }
+ 	public synchronized void add(String key) throws InterruptedException {
+ 		while (this.information.get(key) != null) {
+ 			wait();
+ 		}
+ 		ArrayList<Message> value = new ArrayList<>();
+ 		this.information.put(key, value);
+ 		notifyAll();
+ 	}
 
- public synchronized String getAllKey() {
-     StringBuilder allKey = new StringBuilder();
-     for (String key : information.keySet()) {
-         allKey.append(key).append("\n");
-     }
-     return allKey.toString().trim();
- }
+ 	public synchronized String getAllKey() {
+ 		StringBuilder allKey = new StringBuilder();
+ 		for (String key : information.keySet()) {
+ 			allKey.append("-" + key).append("\n");
+ 		}
+ 		return allKey.isEmpty() ? "Nessun topic presente" : "TOPICS: \n" + allKey.toString().trim();
+ 	}
 
- public synchronized String listAll(String key) throws InterruptedException {
-     while (this.information.get(key).isEmpty()) {
-         wait();
-     }
-     ArrayList<Message> result = this.information.get(key);
-     StringBuilder message = new StringBuilder();
-     for (Message s : result) {
-         message.append(s).append("\n");
-     }
-     notifyAll();
-     return message.toString();
- }
+ 	public synchronized String listAll(String key) throws InterruptedException {
+ 		while (this.information.get(key).isEmpty()) {
+ 			wait();
+ 		}
+ 		ArrayList<Message> result = this.information.get(key);
+ 		StringBuilder message = new StringBuilder();
+ 		message.append("Messaggi: \n");
+ 		for (Message s : result) {
+ 			message.append(s).append("\n");
+ 		}
+ 		notifyAll();
+ 		return message.toString();
+ 	}
+ 	
+ 	public synchronized String list(ArrayList<Message> currentClientMessages) throws InterruptedException {
+ 		while (currentClientMessages.isEmpty()) {
+ 			wait();
+ 		}
+ 		StringBuilder message = new StringBuilder();
+ 		message.append("Messaggi: \n");
+ 		for (Message s : currentClientMessages) {
+ 			message.append(s).append("\n");
+ 		}
+ 		notifyAll();
+ 		return message.toString();
+ 	}
 
- public synchronized boolean containsKey(String key) {
-     return this.information.containsKey(key);
- }
+ 	public synchronized boolean containsKey(String key) {
+ 		return this.information.containsKey(key);
+ 	}
 
- public synchronized void addStringToKey(String key, Message value) throws InterruptedException {
-     while (!this.information.containsKey(key)) {
-         wait();
-     }
-     this.information.get(key).add(value);
-     notifyAll();
-     notifyListeners(key, value); // Notifica i listener quando viene aggiunto un valore
- }
+	 public synchronized void addStringToKey(String key, Message value) throws InterruptedException {
+	     while (!this.information.containsKey(key)) {
+	         wait();
+	     }
+	     this.information.get(key).add(value);
+	     notifyAll();
+	     notifyListeners(key, value); // Notifica i listener quando viene aggiunto un valore
+	 }
 
- public synchronized String printAllStrings(String key) throws InterruptedException {
-     StringBuilder x = new StringBuilder();
-     while (this.information.get(key).isEmpty()) {
-         wait();
-     }
-     ArrayList<Message> result = this.information.get(key);
-     for (Message s : result) {
-         x.append(s.toString()).append("\n");
-     }
-     notifyAll();
-     return x.toString();
- }
+ 	public synchronized String printAllStrings(String key) throws InterruptedException {
+	     StringBuilder x = new StringBuilder();
+	     while (this.information.get(key).isEmpty()) {
+	         wait();
+	     }
+	     ArrayList<Message> result = this.information.get(key);
+	     for (Message s : result) {
+	         x.append(s.toString()).append("\n");
+	     }
+	     notifyAll();
+	     return x.toString();
+ 	}
 
- // Aggiungi un listener
- public synchronized void addListener(ResourceListener listener) {
-     listeners.add(listener);
- }
+ 	// Aggiungi un listener
+ 	public synchronized void addListener(ResourceListener listener) {
+ 		listeners.add(listener);
+ 	}
 
  // Notifica i listener
- private void notifyListeners(String key, Message value) {
-     for (ResourceListener listener : listeners) {
-         listener.onValueAdded(key, value);
-     }
- }
- public synchronized int getSize(String key) {
+ 	private void notifyListeners(String key, Message value) {
+ 		for (ResourceListener listener : listeners) {
+ 			listener.onValueAdded(key, value);
+ 		}
+ 	}
+ 	
+ 	public synchronized int getSize(String key) {
 	        return this.information.get(key).size();
 	}
-
- 
 }
 
 //Interfaccia per i listener
-interface ResourceListener {
- void onValueAdded(String key, Message value);
-}
+	interface ResourceListener {
+		void onValueAdded(String key, Message value);
+	}
