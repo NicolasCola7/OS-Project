@@ -75,12 +75,13 @@ public class Server {
             Thread serverThread = new Thread(new SocketListener(serverSocket));
             serverThread.start();
 
-            String command = "";
+            String input = "";
 
-            while (!command.equals("quit")) {
-                command = userInput.nextLine();
+            while (!input.equals("quit")) {
+            	input = userInput.nextLine();
+                String[] parts = input.split(" ");
                 
-                switch(command) {
+                switch(parts[0]) {
                 
                 case "show":{
                 	String allTopic = topics.show();
@@ -90,14 +91,15 @@ public class Server {
                 
                 case "inspect" :{
                 	
-                	String[] parts = command.split(" ");
                 	
                 	if (parts.length > 1 && topics.containsTopic(parts[1])) {
                 		String topic = parts[1];
                     	gestisciInspect(topic, userInput);
+                    	break;
                 	}
                 	else if (parts.length > 1 && !topics.containsTopic(parts[1])){
                 		System.out.println("Topic non esistente");
+                		break;
                 	}
                 	else
                 		System.out.println("Necessario specificare il topic da ispezionare");
