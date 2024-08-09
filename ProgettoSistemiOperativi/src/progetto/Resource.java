@@ -76,6 +76,14 @@ public class Resource {
  		notifyAll();
  		notifyListeners(topic, msg); // Notifica i listener quando viene aggiunto un valore
  	}
+ 	
+ 	public synchronized void orderId(String topic) {
+ 		
+ 		for(int i = 0; i < topics.get(topic).size(); i++) {
+ 			
+ 			topics.get(topic).get(i).setId(i+1);
+ 		}
+ 	}
 
 
  	// Aggiungi un listener

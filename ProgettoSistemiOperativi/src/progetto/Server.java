@@ -39,6 +39,7 @@ public class Server {
 	                            int id = Integer.parseInt(parts[1]);
 	                            topics.remove(topic, id);
 	                            System.out.println("Messaggio eliminato con successo");
+	                            topics.orderId(topic);
 	                        } catch (NumberFormatException e) {
 	                        	System.out.println("Error: ID must be a number");
 	                        }
