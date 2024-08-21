@@ -36,10 +36,15 @@ public class Server {
 	                case "delete":
 	                    if (parts.length > 1) {
 	                        try {
-	                            int id = Integer.parseInt(parts[1]);
-	                            topics.remove(topic, id);
-	                            System.out.println("Messaggio eliminato con successo");
-	                            topics.orderId(topic);
+	                            int id = Integer.parseInt(parts[1].trim());
+	                            boolean delete=topics.remove(topic, id);
+	                            if(delete) {
+		                            System.out.println("Messaggio eliminato con successo");
+	                            }
+	                            else {
+		                            System.out.println("ID messaggio non esistente o non trovato");
+
+	                            }
 	                        } catch (NumberFormatException e) {
 	                        	System.out.println("Error: ID must be a number");
 	                        }

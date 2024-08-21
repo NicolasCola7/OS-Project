@@ -4,16 +4,22 @@ package progetto;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Resource {
 	private HashMap<String, ArrayList<Message>> topics;
 	private List<ResourceListener> listeners;
-
+	private static AtomicInteger puntatore=new AtomicInteger(0);
  	public Resource() {
  		this.topics = new HashMap<>();
  		this.listeners = new ArrayList<>();
  	}
 
+ 	public static AtomicInteger getPuntatore(){
+			return puntatore;
+		
+ 	}
+ 	
  	public synchronized void add(String topic) throws InterruptedException {
  		while (this.topics.get(topic) != null) {
  	         wait();
@@ -32,9 +38,7 @@ public class Resource {
  	}
 
  	public synchronized String listAll(String topic) throws InterruptedException {
- 		 while (this.topics.get(topic).isEmpty()) {
- 	         wait();
- 	     }
+ 		 
  		ArrayList<Message> result = this.topics.get(topic);
  		StringBuilder message = new StringBuilder();
  		if(!topics.get(topic).isEmpty()) {
@@ -71,20 +75,13 @@ public class Resource {
  		while (!this.topics.containsKey(topic)) {
  	         wait();
  	     }
-
+ 		puntatore.getAndIncrement();
  		this.topics.get(topic).add(msg);
  		notifyAll();
  		notifyListeners(topic, msg); // Notifica i listener quando viene aggiunto un valore
  	}
  	
- 	public synchronized void orderId(String topic) {
- 		
- 		for(int i = 0; i < topics.get(topic).size(); i++) {
- 			
- 			topics.get(topic).get(i).setId(i+1);
- 		}
- 	}
-
+ 	
 
  	// Aggiungi un listener
  	public synchronized void addListener(ResourceListener listener) {
@@ -100,9 +97,27 @@ public class Resource {
  	public synchronized int getSize(String topic) {
         return this.topics.get(topic).size();
 	}
- 	public synchronized void remove(String topic, int id) {
- 		this.topics.get(topic).remove(id);
+ 	public synchronized boolean remove(String topic, int id) {
+ 		Message messaggio=containId(topic,id);
+ 		if(!messaggio.equals(null)) {
+ 		this.topics.get(topic).remove(topics.get(topic).indexOf(messaggio));
+ 		return true;
+ 		}
+ 		else {
+ 			return false;
+ 		}
  	}	
+ 	
+ 	public synchronized Message containId(String topic, int id) {
+			
+ 		for (int i=0; i<topics.get(topic).size();i++) {
+ 			
+ 			if(topics.get(topic).get(i).getId()==id) {
+ 				return topics.get(topic).get(i);
+ 			}
+ 		}
+ 		return null;
+ 	}
  
 }
 

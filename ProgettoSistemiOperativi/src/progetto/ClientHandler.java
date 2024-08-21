@@ -122,7 +122,8 @@ public class ClientHandler implements Runnable, ResourceListener {
                             	for(int i=1; i<parts.length;i++) {
                             		message+=parts[i]+ " ";
                             	}
-                            	Message messageFinal=new Message(topics.getSize(topic)+1,message);
+                            	
+                            	Message messageFinal=new Message(topics.getPuntatore().get(),message);
                                 topics.addMessageToTopic(topic, messageFinal);
                                 currentClientMessages.add(messageFinal);
                                 to.println("Messaggio inviato con successo sul topic");
