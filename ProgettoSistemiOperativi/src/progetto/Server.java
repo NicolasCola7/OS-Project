@@ -19,7 +19,6 @@ public class Server {
 	        boolean closed = false;
 	        while (!closed) {
 	            String request = from.nextLine();
-	            System.out.println("Received inspect request: " + request); // Debug
 	            String[] parts = request.trim().split(" ");
 	            if (parts.length == 0) {
 	            	System.out.println("Error: No command received");
