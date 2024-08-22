@@ -212,7 +212,6 @@ public class ClientHandler implements Runnable, ResourceListener {
             while (!closed) {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
-                    System.out.println(request);
                     String[] parts = request.trim().split(" ");
                     options:
                     switch (parts[0]) {

@@ -17,13 +17,12 @@ public class Resource {
  	}
 
  	public static AtomicInteger getPuntatore(){
-			return puntatore;	
+		return puntatore;	
  	}
  	
  	public synchronized void add(String topic) throws InterruptedException {
  		ArrayList<Message> value = new ArrayList<>();
  		this.topics.put(topic, value);
- 		notifyAll();
  	}
 
  	public synchronized String show() {
@@ -42,7 +41,6 @@ public class Resource {
 	 		for (Message msg : result) {
 	 			message.append(msg).append("\n");
 	 		}
-	 		notifyAll();
  		}
  		return message.isEmpty() ? "Non sono ancora stati inviati messaggi sul topic" : message.toString();
  	}
@@ -54,7 +52,6 @@ public class Resource {
 			for (Message msg : currentClientMessages) {
 				message.append(msg).append("\n");
 			}	
-			notifyAll();
  		}
  		return  message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();
  	}
@@ -66,7 +63,6 @@ public class Resource {
  	public synchronized void addMessageToTopic(String topic, Message msg) throws InterruptedException {
  		puntatore.getAndIncrement();
  		this.topics.get(topic).add(msg);
- 		notifyAll();
  		notifyListeners(topic, msg); // Notifica i listener quando viene aggiunto un valore
  		
  	}

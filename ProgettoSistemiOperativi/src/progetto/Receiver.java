@@ -20,7 +20,6 @@ public class Receiver implements Runnable {
             Scanner from = new Scanner(this.s.getInputStream());
             while (true) {
                 String response = from.nextLine();
-                System.out.println(response);
                 if (response.equals("quit")) {
                     break;
                 }
