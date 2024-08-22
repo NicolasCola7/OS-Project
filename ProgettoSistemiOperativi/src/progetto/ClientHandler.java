@@ -122,6 +122,10 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "send":{
+                        	if(lock.get(topic).isLocked()) {
+                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        	}
+                        	
                             if (parts.length > 1) {
                             	lock.get(topic).lock();
                             	try {
@@ -135,6 +139,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 currentClientMessages.add(messageFinal);
                                 to.println("Messaggio inviato con successo sul topic");
                             	}
+                            	
                             	finally {
                             		lock.get(topic).unlock();
                             	}
@@ -144,11 +149,16 @@ public class ClientHandler implements Runnable, ResourceListener {
                         }
                         
                         case "list":{
+                        	if(lock.get(topic).isLocked()) {
+                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        	}
+                        	
                         	lock.get(topic).lock();
                         	try {
                             String message = topics.list(currentClientMessages);
                             to.println(message.trim());
                         	}
+                        	
                         	finally {
                         		lock.get(topic).unlock();
                         	}
@@ -156,11 +166,16 @@ public class ClientHandler implements Runnable, ResourceListener {
                         }
                             
                         case "listall":{
+                        	if(lock.get(topic).isLocked()) {
+                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        	}
+                        	
                         	lock.get(topic).lock();
                         	try {
                             String message = topics.listAll(topic);
                             to.println(message.trim());
                         	}
+                        	
                         	finally {
                         		lock.get(topic).unlock();
                         	}
@@ -207,10 +222,15 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "listall":
+                        	if(lock.get(topic).isLocked()) {
+                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        	}
+                        	
                         	lock.get(topic).lock();
                         	try {
                             to.println(topics.listAll(topic));
                         	}
+                        	
                         	finally {
                         		lock.get(topic).unlock();
                         	}

@@ -12,7 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SocketListener implements Runnable {
     private ServerSocket server;
     private ArrayList<Thread> children = new ArrayList<>();
-    //private Resource topics = ClientHandler.topics; 
     private HashMap<String,ReentrantLock> lock ; // Aggiunto per passare il lock ai client
 
     public SocketListener(ServerSocket server, HashMap<String,ReentrantLock> lock) {

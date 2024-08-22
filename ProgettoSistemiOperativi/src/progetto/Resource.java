@@ -10,20 +10,17 @@ public class Resource {
 	private HashMap<String, ArrayList<Message>> topics;
 	private List<ResourceListener> listeners;
 	private static AtomicInteger puntatore=new AtomicInteger(0);
+	
  	public Resource() {
  		this.topics = new HashMap<>();
  		this.listeners = new ArrayList<>();
  	}
 
  	public static AtomicInteger getPuntatore(){
-			return puntatore;
-		
+			return puntatore;	
  	}
  	
  	public synchronized void add(String topic) throws InterruptedException {
- 		while (this.topics.get(topic) != null) {
- 	         wait();
- 	     }
  		ArrayList<Message> value = new ArrayList<>();
  		this.topics.put(topic, value);
  		notifyAll();
@@ -38,7 +35,6 @@ public class Resource {
  	}
 
  	public synchronized String listAll(String topic) throws InterruptedException {
- 		 
  		ArrayList<Message> result = this.topics.get(topic);
  		StringBuilder message = new StringBuilder();
  		if(!topics.get(topic).isEmpty()) {
@@ -52,9 +48,6 @@ public class Resource {
  	}
  
  	public synchronized String list(ArrayList<Message> currentClientMessages) throws InterruptedException {
- 		while (currentClientMessages.isEmpty()) {
- 	         wait();
- 	     }
  		StringBuilder message = new StringBuilder();
  		if(!currentClientMessages.isEmpty()) {
 			message.append("MESSAGGI: \n");
@@ -71,18 +64,13 @@ public class Resource {
  	}
 
  	public synchronized void addMessageToTopic(String topic, Message msg) throws InterruptedException {
- 		
- 		while (!this.topics.containsKey(topic)) {
- 	         wait();
- 	     }
  		puntatore.getAndIncrement();
  		this.topics.get(topic).add(msg);
  		notifyAll();
  		notifyListeners(topic, msg); // Notifica i listener quando viene aggiunto un valore
+ 		
  	}
  	
- 	
-
  	// Aggiungi un listener
  	public synchronized void addListener(ResourceListener listener) {
  		listeners.add(listener);
@@ -94,14 +82,17 @@ public class Resource {
  			listener.onValueAdded(topic, msg);
  		}
  	}
+ 	
  	public synchronized int getSize(String topic) {
         return this.topics.get(topic).size();
 	}
+ 	
  	public synchronized boolean remove(String topic, int id) {
  		Message messaggio=containId(topic,id);
  		if(!messaggio.equals(null)) {
- 		this.topics.get(topic).remove(topics.get(topic).indexOf(messaggio));
- 		return true;
+ 			int messageIndex = topics.get(topic).indexOf(messaggio);
+ 			this.topics.get(topic).remove(messageIndex);
+ 			return true;
  		}
  		else {
  			return false;
@@ -109,7 +100,6 @@ public class Resource {
  	}	
  	
  	public synchronized Message containId(String topic, int id) {
-			
  		for (int i=0; i<topics.get(topic).size();i++) {
  			
  			if(topics.get(topic).get(i).getId()==id) {
