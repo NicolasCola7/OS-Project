@@ -4,11 +4,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 
 public class Server {
 	
 	private static Resource topics = ClientHandler.topics;
+	private static final HashMap<String,ReentrantLock> lock = new HashMap<String,ReentrantLock>(); // Lock per gestire l'accesso ai topic
 	
 	  private static void gestisciInspect(String topic, Scanner from) {
 	        boolean closed = false;
@@ -59,79 +64,79 @@ public class Server {
 	        System.out.println("Ending Inspect session for key: " + topic);
 	    }
 	
-    public static void main(String[] args) {
-        args = new String[1];
-        args[0] = "9000";
-        if (args.length < 1) {
-            System.err.println("Usage: java Server <port>");
-            return;
-        }
+	  public static void main(String[] args) {
+	        args = new String[1];
+	        args[0] = "9000";
+	        if (args.length < 1) {
+	            System.err.println("Usage: java Server <port>");
+	            return;
+	        }
 
-        int port = Integer.parseInt(args[0]);
-        Scanner userInput = new Scanner(System.in);
-        try {
-           
-        	ServerSocket serverSocket = new ServerSocket(port);
-            System.out.println("Server started on port " + port);
+	        int port = Integer.parseInt(args[0]);
+	        Scanner userInput = new Scanner(System.in);
 
-            /*
-             * Deleghiamo a un altro thread la gestione di tutte le connessioni client;
-             * Nel thread principale gestiamo la console del server
-             */
-            Thread serverThread = new Thread(new SocketListener(serverSocket));
-            serverThread.start();
+	        try {
+	            ServerSocket serverSocket = new ServerSocket(port);
+	            System.out.println("Server started on port " + port);
 
-            String input = "";
+	            /*
+	             * Deleghiamo a un altro thread la gestione di tutte le connessioni client;
+	             * Nel thread principale gestiamo la console del server
+	             */
+	            Thread serverThread = new Thread(new SocketListener(serverSocket,lock));
+	            serverThread.start();
 
-            while (!input.equals("quit")) {
-            	input = userInput.nextLine();
-                String[] parts = input.split(" ");
-                
-                switch(parts[0]) {
-                
-                case "show":{
-                	String allTopic = topics.show();
-                    System.out.println(allTopic);
-                	break;
-                }
-                
-                case "inspect" :{
-                	
-                	
-                	if (parts.length > 1 && topics.containsTopic(parts[1])) {
-                		String topic = parts[1];
-                    	gestisciInspect(topic, userInput);
-                    	break;
-                	}
-                	else if (parts.length > 1 && !topics.containsTopic(parts[1])){
-                		System.out.println("Topic non esistente");
-                		break;
-                	}
-                	else
-                		System.out.println("Necessario specificare il topic da ispezionare");
-                	break;
-                }
-                
-                default :
-                	System.out.println("Unknown cmd");
-               
-                }
-            }
+	            String input = "";
 
-            try {
-                // Rimaniamo in attesa che sender e receiver terminino la loro esecuzione
-            	 serverThread.interrupt();
-                 /* attendi la terminazione del thread */
-                 serverThread.join();
-                System.out.println("Local socket closed.");
-            } catch (InterruptedException e) {
-                return;
-            }
+	            while (!input.equals("quit")) {
+	                input = userInput.nextLine();
+	                String[] parts = input.split(" ");
 
-            System.out.println("Server main thread terminated.");
-        } catch (IOException e) {
-            System.err.println("IOException caught: " + e);
-            e.printStackTrace();
-        }
-    }
-}
+	                switch(parts[0]) {
+	                    case "show": {	                        
+	                        String allTopic = topics.show();
+	                        System.out.println(allTopic);
+	                        break;
+	                    }
+
+	                    case "inspect": {
+	                        if (parts.length > 1 && topics.containsTopic(parts[1])) {
+	                            String topic = parts[1];
+	                            lock.get(topic).lock();  // Acquisisce il lock per bloccare i client
+	                            try {
+	                                gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
+	                            } finally {
+	                                lock.get(topic).unlock();  // Rilascia il lock
+	                            }
+	                            break;
+	                        } else if (parts.length > 1 && !topics.containsTopic(parts[1])) {
+	                            System.out.println("Topic non esistente");
+	                            break;
+	                        } else {
+	                            System.out.println("Necessario specificare il topic da ispezionare");
+	                            break;
+	                        }
+	                    }
+
+	                    default:
+	                        System.out.println("Unknown cmd");
+	                }
+	            }
+
+	            try {
+	                // Rimaniamo in attesa che sender e receiver terminino la loro esecuzione
+	                serverThread.interrupt();
+	                /* attendi la terminazione del thread */
+	                serverThread.join();
+	                System.out.println("Local socket closed.");
+	            } catch (InterruptedException e) {
+	                return;
+	            }
+
+	            System.out.println("Server main thread terminated.");
+	        } catch (IOException e) {
+	            System.err.println("IOException caught: " + e);
+	            e.printStackTrace();
+	        }
+	    }
+	}

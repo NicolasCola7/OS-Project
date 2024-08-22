@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ClientHandler implements Runnable, ResourceListener {
 
@@ -13,10 +15,12 @@ public class ClientHandler implements Runnable, ResourceListener {
     public static Resource topics = new Resource();
     private boolean subscriberActive = false; // Variabile di stato per il subscriber
     private String subscriberTopic;
+    private HashMap<String,ReentrantLock> lock; 
 
-    public ClientHandler(Socket s) {
+    public ClientHandler(Socket s, HashMap<String,ReentrantLock> lock) {
         this.s = s;
- 
+        this.lock = lock;
+        
         topics.addListener(this); // Registrazione come listener
     }
 
@@ -47,6 +51,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 if (!topics.containsTopic(parts[1])) {
                                     topics.add(topic);
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + topic + " non precedentemente esistente è stato creato");
+                                    lock.put(topic, new ReentrantLock());
                                     gestisciPublisher(topic);
                                 } else {
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + topic + " precedentemente esistente");
@@ -118,6 +123,8 @@ public class ClientHandler implements Runnable, ResourceListener {
                             
                         case "send":{
                             if (parts.length > 1) {
+                            	lock.get(topic).lock();
+                            	try {
                             	String message="";
                             	for(int i=1; i<parts.length;i++) {
                             		message+=parts[i]+ " ";
@@ -127,19 +134,36 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 topics.addMessageToTopic(topic, messageFinal);
                                 currentClientMessages.add(messageFinal);
                                 to.println("Messaggio inviato con successo sul topic");
+                            	}
+                            	finally {
+                            		lock.get(topic).unlock();
+                            	}
                             }
+                            
                             break options;
                         }
                         
                         case "list":{
+                        	lock.get(topic).lock();
+                        	try {
                             String message = topics.list(currentClientMessages);
                             to.println(message.trim());
+                        	}
+                        	finally {
+                        		lock.get(topic).unlock();
+                        	}
                             break options;
                         }
                             
                         case "listall":{
+                        	lock.get(topic).lock();
+                        	try {
                             String message = topics.listAll(topic);
                             to.println(message.trim());
+                        	}
+                        	finally {
+                        		lock.get(topic).unlock();
+                        	}
                             break options;
                         }
                         
@@ -183,7 +207,13 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "listall":
+                        	lock.get(topic).lock();
+                        	try {
                             to.println(topics.listAll(topic));
+                        	}
+                        	finally {
+                        		lock.get(topic).unlock();
+                        	}
                             break options;
                             
                         default:
