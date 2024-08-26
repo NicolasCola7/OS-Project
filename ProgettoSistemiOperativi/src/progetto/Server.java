@@ -1,144 +1,146 @@
 package progetto;
-//
+
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
+import java.util.concurrent.Semaphore;
 
 public class Server {
-	
-	private static Resource topics = ClientHandler.topics;
-	private static final HashMap<String,ReentrantLock> lock = new HashMap<String,ReentrantLock>(); // Lock per gestire l'accesso ai topic
-	
-	  private static void gestisciInspect(String topic, Scanner from) {
-	        boolean closed = false;
-	        while (!closed) {
-	            String request = from.nextLine();
-	            String[] parts = request.trim().split(" ");
-	            if (parts.length == 0) {
-	            	System.out.println("Error: No command received");
-	                continue;
-	            }
-	            String command = parts[0];
-	            switch (command) {
-	                case "end":
-	                    closed = true;
-	                    break;
-	                case "listall":
-	                    try {
-	                        String allMessage = topics.listAll(topic);
-	                        System.out.println(allMessage);
-	                    } catch (InterruptedException e) {
-	                        e.printStackTrace();
-	                    }
-	                    break;
-	                case "delete":
-	                    if (parts.length > 1) {
-	                        try {
-	                            int id = Integer.parseInt(parts[1].trim());
-	                            int delete=topics.remove(topic, id);
-	                            if(delete==1) {
-		                            System.out.println("Messaggio eliminato con successo");
-	                            }
-	                            else if(delete==2) {
-		                            System.out.println("ID messaggio non esistente o non trovato");
 
-	                            }
-	                            else {
-	                            	System.out.println("Non sono presenti messaggi sul topic da poter eliminare");
-	                            }
-	                        } catch (NumberFormatException e) {
-	                        	System.out.println("Error: ID must be a number");
-	                        }
-	                    } else {
-	                    	System.out.println("Error: delete requires an id argument");
-	                    }
-	                    break;
-	                default:
-	                	System.out.println("Unknown cmd: " + command); // Debug
-	            }
-	        }
-	        System.out.println("Ending Inspect session for key: " + topic);
-	    }
-	
-	  public static void main(String[] args) {
-	        args = new String[1];
-	        args[0] = "9000";
-	        if (args.length < 1) {
-	            System.err.println("Usage: java Server <port>");
-	            return;
-	        }
+    private static Resource topics = ClientHandler.topics;
+    private static final HashMap<String, Semaphore> semaphores = new HashMap<>(); // Semaforo binario per gestire l'accesso ai topic
 
-	        int port = Integer.parseInt(args[0]);
-	        Scanner userInput = new Scanner(System.in);
+    private static void gestisciInspect(String topic, Scanner from) {
+        boolean closed = false;
+        while (!closed) {
+            String request = from.nextLine();
+            String[] parts = request.trim().split(" ");
+            if (parts.length == 0) {
+                System.out.println("Error: No command received");
+                continue;
+            }
+            String command = parts[0];
+            switch (command) {
+                case "end":
+                    closed = true;
+                    break;
+                case "listall":
+                    try {
+                        String allMessage = topics.listAll(topic);
+                        System.out.println(allMessage);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "delete":
+                    if (parts.length > 1) {
+                        try {
+                            int id = Integer.parseInt(parts[1].trim());
+                            int delete = topics.remove(topic, id);
+                            if (delete == 1) {
+                                System.out.println("Messaggio eliminato con successo");
+                            } else if (delete == 2) {
+                                System.out.println("ID messaggio non esistente o non trovato");
+                            } else {
+                                System.out.println("Non sono presenti messaggi sul topic da poter eliminare");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Error: ID must be a number");
+                        }
+                    } else {
+                        System.out.println("Error: delete requires an id argument");
+                    }
+                    break;
+                default:
+                    System.out.println("Unknown cmd: " + command); // Debug
+            }
+        }
+        System.out.println("Ending Inspect session for key: " + topic);
+    }
 
-	        try {
-	            ServerSocket serverSocket = new ServerSocket(port);
-	            System.out.println("Server started on port " + port);
+    public static void main(String[] args) {
+        args = new String[1];
+        args[0] = "9000";
+        if (args.length < 1) {
+            System.err.println("Usage: java Server <port>");
+            return;
+        }
 
-	            /*
-	             * Deleghiamo a un altro thread la gestione di tutte le connessioni client;
-	             * Nel thread principale gestiamo la console del server
-	             */
-	            Thread serverThread = new Thread(new SocketListener(serverSocket,lock));
-	            serverThread.start();
+        int port = Integer.parseInt(args[0]);
+        Scanner userInput = new Scanner(System.in);
 
-	            String input = "";
+        try {
+            ServerSocket serverSocket = new ServerSocket(port);
+            System.out.println("Server started on port " + port);
 
-	            while (!input.equals("quit")) {
-	                input = userInput.nextLine();
-	                String[] parts = input.split(" ");
+            /*
+             * Deleghiamo a un altro thread la gestione di tutte le connessioni client;
+             * Nel thread principale gestiamo la console del server
+             */
+            Thread serverThread = new Thread(new SocketListener(serverSocket, semaphores));
+            serverThread.start();
 
-	                switch(parts[0]) {
-	                    case "show": {	                        
-	                        String allTopic = topics.show();
-	                        System.out.println(allTopic);
-	                        break;
-	                    }
+            String input = "";
 
-	                    case "inspect": {
-	                        if (parts.length > 1 && topics.containsTopic(parts[1])) {
-	                            String topic = parts[1];
-	                            lock.get(topic).lock();  // Acquisisce il lock per bloccare i client
-	                            try {
-	                                gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
-	                            } finally {
-	                                lock.get(topic).unlock();  // Rilascia il lock
-	                            }
-	                            break;
-	                        } else if (parts.length > 1 && !topics.containsTopic(parts[1])) {
-	                            System.out.println("Topic non esistente");
-	                            break;
-	                        } else {
-	                            System.out.println("Necessario specificare il topic da ispezionare");
-	                            break;
-	                        }
-	                    }
+            while (!input.equals("quit")) {
+                input = userInput.nextLine();
+                String[] parts = input.split(" ");
 
-	                    default:
-	                        System.out.println("Unknown cmd");
-	                }
-	            }
+                switch (parts[0]) {
+                    case "show": {
+                        String allTopic = topics.show();
+                        System.out.println(allTopic);
+                        break;
+                    }
 
-	            try {
-	                // Rimaniamo in attesa che sender e receiver terminino la loro esecuzione
-	                serverThread.interrupt();
-	                /* attendi la terminazione del thread */
-	                serverThread.join();
-	                System.out.println("Local socket closed.");
-	            } catch (InterruptedException e) {
-	                return;
-	            }
+                    case "inspect": {
+                        if (parts.length > 1 && topics.containsTopic(parts[1])) {
+                            String topic = parts[1];
+                            Semaphore semaphore = semaphores.get(topic);
 
-	            System.out.println("Server main thread terminated.");
-	        } catch (IOException e) {
-	            System.err.println("IOException caught: " + e);
-	            e.printStackTrace();
-	        }
-	    }
-	}
+                            if (semaphore == null) {
+                                semaphore = new Semaphore(1);
+                                semaphores.put(topic, semaphore);
+                            }
+
+                            try {
+                                semaphore.acquire();  // Acquisisce il semaforo per bloccare i client
+                                gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            } finally {
+                                semaphore.release();  // Rilascia il semaforo
+                            }
+                            break;
+                        } else if (parts.length > 1 && !topics.containsTopic(parts[1])) {
+                            System.out.println("Topic non esistente");
+                            break;
+                        } else {
+                            System.out.println("Necessario specificare il topic da ispezionare");
+                            break;
+                        }
+                    }
+
+                    default:
+                        System.out.println("Unknown cmd");
+                }
+            }
+
+            try {
+                // Rimaniamo in attesa che sender e receiver terminino la loro esecuzione
+                serverThread.interrupt();
+                /* attendi la terminazione del thread */
+                serverThread.join();
+                System.out.println("Local socket closed.");
+            } catch (InterruptedException e) {
+                return;
+            }
+
+            System.out.println("Server main thread terminated.");
+        } catch (IOException e) {
+            System.err.println("IOException caught: " + e);
+            e.printStackTrace();
+        }
+    }
+}

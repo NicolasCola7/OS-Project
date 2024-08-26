@@ -6,23 +6,22 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
 
 public class SocketListener implements Runnable {
     private ServerSocket server;
     private ArrayList<Thread> children = new ArrayList<>();
-    private HashMap<String,ReentrantLock> lock ; // Aggiunto per passare il lock ai client
+    private HashMap<String, Semaphore> semaphores; // Mappa per gestire i semafori per i topic
 
-    public SocketListener(ServerSocket server, HashMap<String,ReentrantLock> lock) {
+    public SocketListener(ServerSocket server, HashMap<String, Semaphore> semaphores) {
         this.server = server;
-        this.lock = lock; // Inizializzazione del lock
+        this.semaphores = semaphores; // Inizializzazione dei semafori
     }
 
     @Override
     public void run() {
         try {
-            this.server.setSoTimeout(5000);
+            this.server.setSoTimeout(5000); // Timeout per la connessione
             System.out.println("Waiting for a new client...");
             while (!Thread.interrupted()) {
                 try {
@@ -30,8 +29,8 @@ public class SocketListener implements Runnable {
                     if (!Thread.interrupted()) {
                         System.out.println("Client connected");
 
-                        // Crea un nuovo thread per lo specifico socket
-                        Thread handlerThread = new Thread(new ClientHandler(s, lock));
+                        // Crea un nuovo thread per gestire il client connesso
+                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores));
                         handlerThread.start();
                         this.children.add(handlerThread);
                     } else {
@@ -57,6 +56,3 @@ public class SocketListener implements Runnable {
         }
     }
 }
-
-
-  

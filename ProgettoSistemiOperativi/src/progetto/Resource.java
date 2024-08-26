@@ -11,7 +11,7 @@ public class Resource {
 	private List<ResourceListener> listeners;
 	private static AtomicInteger puntatore=new AtomicInteger(0);
 	
- 	public Resource() {
+ 	public  Resource() {
  		this.topics = new HashMap<>();
  		this.listeners = new ArrayList<>();
  	}

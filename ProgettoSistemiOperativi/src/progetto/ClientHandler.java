@@ -6,8 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
 
 public class ClientHandler implements Runnable, ResourceListener {
 
@@ -15,11 +14,11 @@ public class ClientHandler implements Runnable, ResourceListener {
     public static Resource topics = new Resource();
     private boolean subscriberActive = false; // Variabile di stato per il subscriber
     private String subscriberTopic;
-    private HashMap<String,ReentrantLock> lock; 
+    private HashMap<String, Semaphore> semaphores; 
 
-    public ClientHandler(Socket s, HashMap<String,ReentrantLock> lock) {
+    public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores) {
         this.s = s;
-        this.lock = lock;
+        this.semaphores = semaphores;
         
         topics.addListener(this); // Registrazione come listener
     }
@@ -40,7 +39,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                     String[] parts = request.trim().split(" ");
                     switch (parts[0]) {
                        
-                    	case "quit":{
+                        case "quit":{
                             closed = true;
                             break;
                         }
@@ -51,7 +50,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 if (!topics.containsTopic(parts[1])) {
                                     topics.add(topic);
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' non precedentemente esistente è stato creato");
-                                    lock.put(topic, new ReentrantLock());
+                                    semaphores.put(topic, new Semaphore(1)); // Aggiungi un semaforo binario per il topic
                                     gestisciPublisher(topic);
                                 } else {
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' precedentemente esistente");
@@ -59,7 +58,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 }
                             }
                             break;
-                    	}
+                        }
                         
                         case "show":{
                             String allTopics = topics.show();
@@ -106,7 +105,7 @@ public class ClientHandler implements Runnable, ResourceListener {
         try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
-            ArrayList<Message> currentClientMessages=new ArrayList<Message>();
+            ArrayList<Message> currentClientMessages = new ArrayList<Message>();
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
             boolean closed = false;
@@ -122,63 +121,56 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "send":{
-                        	if(lock.get(topic).isLocked()) {
-                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                        	}
-                        	
-                            if (parts.length > 1) {
-                            	lock.get(topic).lock();
-                            	try {
-                            	String message="";
-                            	for(int i=1; i<parts.length;i++) {
-                            		message+=parts[i]+ " ";
-                            	}
-                            	
-                            	Message messageFinal=new Message(topics.getPuntatore().get(),message);
-                                topics.addMessageToTopic(topic, messageFinal);
-                                currentClientMessages.add(messageFinal);
-                                to.println("Messaggio inviato con successo sul topic");
-                            	}
-                            	
-                            	finally {
-                            		lock.get(topic).unlock();
-                            	}
+                            if (semaphores.get(topic).availablePermits() == 0) {
+                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
-                            
+
+                            if (parts.length > 1) {
+                                semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                                try {
+                                    String message = "";
+                                    for (int i = 1; i < parts.length; i++) {
+                                        message += parts[i] + " ";
+                                    }
+                                    
+                                    Message messageFinal = new Message(topics.getPuntatore().get(), message);
+                                    topics.addMessageToTopic(topic, messageFinal);
+                                    currentClientMessages.add(messageFinal);
+                                    to.println("Messaggio inviato con successo sul topic");
+                                } finally {
+                                    semaphores.get(topic).release(); // Rilascia il semaforo
+                                }
+                            }
                             break options;
                         }
                         
                         case "list":{
-                        	if(lock.get(topic).isLocked()) {
-                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                        	}
-                        	
-                        	lock.get(topic).lock();
-                        	try {
-                            String message = topics.list(currentClientMessages);
-                            to.println(message.trim());
-                        	}
-                        	
-                        	finally {
-                        		lock.get(topic).unlock();
-                        	}
+                            if (semaphores.get(topic).availablePermits() == 0) {
+                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                            }
+
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                String message = topics.list(currentClientMessages);
+                                to.println(message.trim());
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
+                            }
                             break options;
                         }
                             
                         case "listall":{
-                        	if(lock.get(topic).isLocked()) {
-                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                        	}
-                        	
-                        	lock.get(topic).lock();
-                        	try {
-                            String message = topics.listAll(topic);
-                            to.println(message.trim());
-                        	}
-                        	
-                        	finally {
-                        		lock.get(topic).unlock();
-                        	}
+                            if (semaphores.get(topic).availablePermits() == 0) {
+                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                            }
+
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                String message = topics.listAll(topic);
+                                to.println(message.trim());
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
+                            }
                             break options;
                         }
                         
@@ -221,18 +213,16 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "listall":
-                        	if(lock.get(topic).isLocked()) {
-                        		to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                        	}
-                        	
-                        	lock.get(topic).lock();
-                        	try {
-                            to.println(topics.listAll(topic));
-                        	}
-                        	
-                        	finally {
-                        		lock.get(topic).unlock();
-                        	}
+                            if (semaphores.get(topic).availablePermits() == 0) {
+                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                            }
+
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                to.println(topics.listAll(topic));
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
+                            }
                             break options;
                             
                         default:
@@ -265,6 +255,5 @@ public class ClientHandler implements Runnable, ResourceListener {
                 e.printStackTrace();
             }
         }
-	}
+    }
 }
-
