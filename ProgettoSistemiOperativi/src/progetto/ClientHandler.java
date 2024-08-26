@@ -19,6 +19,7 @@ public class ClientHandler implements Runnable, ResourceListener {
     public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores) {
         this.s = s;
         this.semaphores = semaphores;
+        
         topics.addListener(this); // Registrazione come listener
     }
 
@@ -37,11 +38,13 @@ public class ClientHandler implements Runnable, ResourceListener {
                     System.out.println(request);
                     String[] parts = request.trim().split(" ");
                     switch (parts[0]) {
-                        case "quit":
+                       
+                        case "quit":{
                             closed = true;
                             break;
+                        }
                         
-                        case "publish":
+                        case "publish":{
                             if (parts.length > 1) {
                                 String topic = parts[1];
                                 if (!topics.containsTopic(parts[1])) {
@@ -55,13 +58,15 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 }
                             }
                             break;
+                        }
                         
-                        case "show":
+                        case "show":{
                             String allTopics = topics.show();
                             to.println(allTopics);
                             break;
+                        }
                         
-                        case "subscribe":
+                        case "subscribe":{
                             if (parts.length > 1) {
                                 String topic = parts[1];
                                 if (topics.containsTopic(parts[1])) {
@@ -73,10 +78,12 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 }
                             }
                             break;
+                        }
                         
                         default:
                             to.println("Unknown cmd");
                     }
+                    
                 } else {
                     to.println("quit");
                     break;
@@ -113,7 +120,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                             closed = true;
                             break;
                             
-                        case "send":
+                        case "send":{
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
@@ -126,64 +133,46 @@ public class ClientHandler implements Runnable, ResourceListener {
                                         message += parts[i] + " ";
                                     }
                                     
-                                    Message messageFinal = new Message(0, message.trim());
+                                    Message messageFinal = new Message(topics.getPuntatoreByTopic(topic), message);
                                     topics.addMessageToTopic(topic, messageFinal);
                                     currentClientMessages.add(messageFinal);
-                                    to.println("Messaggio inviato con successo");
-                                    break options;
-                                } finally {
-                                    semaphores.get(topic).release(); // Rilascia il semaforo
-                                }
-                            } else {
-                                to.println("Messaggio vuoto");
-                            }
-                            break;
-                            
-                        case "list":
-                            if (semaphores.get(topic).availablePermits() == 0) {
-                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            } else {
-                                semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                try {
-                                    String allMessages = topics.list(currentClientMessages);
-                                    to.println(allMessages);
+                                    to.println("Messaggio inviato con successo sul topic");
                                 } finally {
                                     semaphores.get(topic).release(); // Rilascia il semaforo
                                 }
                             }
-                            break;
-                            
-                        case "delete":
+                            break options;
+                        }
+                        
+                        case "list":{
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
 
-                            if (parts.length > 1) {
-                                semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                try {
-                                    int id;
-                                    try {
-                                        id = Integer.parseInt(parts[1]);
-                                    } catch (NumberFormatException e) {
-                                        to.println("Id non valido");
-                                        break options;
-                                    }
-                                    
-                                    int result = topics.remove(topic, id);
-                                    if (result == 1) {
-                                        to.println("Messaggio eliminato con successo");
-                                    } else if (result == 2) {
-                                        to.println("Id non esistente");
-                                    } else {
-                                        to.println("Nessun messaggio presente nel topic " + topic);
-                                    }
-                                } finally {
-                                    semaphores.get(topic).release(); // Rilascia il semaforo
-                                }
-                            } else {
-                                to.println("Id non inserito");
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                String message = topics.list(currentClientMessages);
+                                to.println(message.trim());
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
                             }
-                            break;
+                            break options;
+                        }
+                            
+                        case "listall":{
+                            if (semaphores.get(topic).availablePermits() == 0) {
+                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                            }
+
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                String message = topics.listAll(topic);
+                                to.println(message.trim());
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
+                            }
+                            break options;
+                        }
                         
                         default:
                             to.println("Unknown cmd");
@@ -204,39 +193,38 @@ public class ClientHandler implements Runnable, ResourceListener {
     }
 
     public void gestisciSubscriber(String topic) throws InterruptedException {
-        subscriberActive = true; // Imposta lo stato del subscriber su attivo
+        subscriberActive = true; // Imposta lo stato attivo per il subscriber
         try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
             boolean closed = false;
-            while (!closed && subscriberActive) {
+            while (!closed) {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
-                    System.out.println(request);
                     String[] parts = request.trim().split(" ");
                     options:
                     switch (parts[0]) {
+                    
                         case "quit":
                             closed = true;
-                            subscriberActive = false; // Imposta lo stato del subscriber su inattivo
                             break;
-
-                        case "list":
+                            
+                        case "listall":
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            } else {
-                                semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                try {
-                                    String allMessages = topics.listAll(topic);
-                                    to.println(allMessages);
-                                } finally {
-                                    semaphores.get(topic).release(); // Rilascia il semaforo
-                                }
                             }
-                            break;
-                        
+
+                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+                                to.println(topics.listAll(topic));
+                            } finally {
+                                semaphores.get(topic).release(); // Rilascia il semaforo
+                            }
+                            break options;
+                            
                         default:
                             to.println("Unknown cmd");
                     }
@@ -252,15 +240,17 @@ public class ClientHandler implements Runnable, ResourceListener {
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
             e.printStackTrace();
+        } finally {
+            subscriberActive = false; // Imposta lo stato come inattivo per il subscriber
         }
     }
 
     @Override
-    public void onValueAdded(String topic, Message msg) {
-        if (subscriberActive && topic.equals(subscriberTopic)) {
+    public void onValueAdded(String key, Message value) {
+        if (subscriberActive && key.equals(subscriberTopic)) {
             try {
                 PrintWriter to = new PrintWriter(s.getOutputStream(), true);
-                to.println("Nuovo messaggio sul topic '" + topic + "': " + msg.getText());
+                to.println("Nuovo messaggio sul topic " + key + ":\n" + value);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -30,6 +30,10 @@ public class Resource {
         }
         return allTopics.isEmpty() ? "Nessun topic esistente" : "TOPICS:\n" + allTopics.toString().trim();
     }
+    
+    public synchronized int getPuntatoreByTopic(String topic) {
+    	return this.topicCounters.get(topic).get();
+    }
 
     public synchronized String listAll(String topic) throws InterruptedException {
         ArrayList<Message> result = this.topics.get(topic);
