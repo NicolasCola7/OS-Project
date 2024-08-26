@@ -50,11 +50,11 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 String topic = parts[1];
                                 if (!topics.containsTopic(parts[1])) {
                                     topics.add(topic);
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + topic + " non precedentemente esistente è stato creato");
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' non precedentemente esistente è stato creato");
                                     lock.put(topic, new ReentrantLock());
                                     gestisciPublisher(topic);
                                 } else {
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic: " + topic + " precedentemente esistente");
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' precedentemente esistente");
                                     gestisciPublisher(topic);
                                 }
                             }

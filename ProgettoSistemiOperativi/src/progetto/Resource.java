@@ -83,15 +83,20 @@ public class Resource {
         return this.topics.get(topic).size();
 	}
  	
- 	public synchronized boolean remove(String topic, int id) {
+ 	public synchronized int remove(String topic, int id) {
+ 		if(this.topics.get(topic).size()>0) {
  		Message messaggio=containId(topic,id);
  		if(!messaggio.equals(null)) {
  			int messageIndex = topics.get(topic).indexOf(messaggio);
  			this.topics.get(topic).remove(messageIndex);
- 			return true;
+ 			return 1;
  		}
  		else {
- 			return false;
+ 			return 2;
+ 		}
+ 		}
+ 		else {
+ 			return 0;
  		}
  	}	
  	
