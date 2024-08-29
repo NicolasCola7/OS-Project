@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
-public class ClientHandler implements Runnable, ResourceListener {
+public class ClientHandler extends Thread implements Runnable, ResourceListener {
 
     private Socket s;
     public  Resource topics;
@@ -50,7 +50,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 String topic = parts[1];
                                 if (!topics.containsTopic(parts[1])) {
                                     topics.add(topic);
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' non precedentemente esistente è stato creato");
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' non precedentemente esistente è stato creato");                                    
                                     semaphores.put(topic, new Semaphore(1)); // Aggiungi un semaforo binario per il topic
                                     gestisciPublisher(topic);
                                 } else {
@@ -121,57 +121,81 @@ public class ClientHandler implements Runnable, ResourceListener {
                             closed = true;
                             break;
                             
-                        case "send":{
-                            if (semaphores.get(topic).availablePermits() == 0) {
-                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            }
-
-                            if (parts.length > 1) {
-                                semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                try {
-                                    String message = "";
-                                    for (int i = 1; i < parts.length; i++) {
-                                        message += parts[i] + " ";
-                                    }
-                                    
-                                    Message messageFinal = new Message(topics.getPuntatoreByTopic(topic), message);
-                                    topics.addMessageToTopic(topic, messageFinal);
-                                    currentClientMessages.add(messageFinal);
-                                    to.println("Messaggio inviato con successo sul topic");
-                                } finally {
-                                    semaphores.get(topic).release(); // Rilascia il semaforo
+                        case "send": {
+                            // Creazione del thread figlio
+                            Thread childThread = new Thread(() -> {
+                                // Codice da eseguire nel thread figlio
+                            	if (semaphores.get(topic).availablePermits() == 0) {
+                                    to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                                 }
-                            }
-                            break options;
+
+                                if (parts.length > 1) {
+                                    try {
+										semaphores.get(topic).acquire();
+									} catch (InterruptedException e) {										
+										e.printStackTrace();
+									} // Acquisisci il semaforo
+                                    try {
+                                        String message = "";
+                                        for (int i = 1; i < parts.length; i++) {
+                                            message += parts[i] + " ";
+                                        }
+
+                                        Message messageFinal = new Message(topics.getPuntatoreByTopic(topic), message);
+                                        topics.addMessageToTopic(topic, messageFinal);
+                                        currentClientMessages.add(messageFinal);
+                                        to.println("Messaggio inviato con successo sul topic");
+                                    } finally {
+                                        semaphores.get(topic).release(); // Rilascia il semaforo
+                                    }
+                                }                               
+                               
+                            });
+                            childThread.start(); 
+                            break options;                         
+                            
                         }
+
                         
                         case "list":{
+                        	 Thread childThread = new Thread(() -> {
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
 
-                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            try {
+								semaphores.get(topic).acquire();
+							} catch (InterruptedException e) {								
+								e.printStackTrace();
+							} // Acquisisci il semaforo
                             try {
                                 String message = topics.list(currentClientMessages);
                                 to.println(message.trim());
                             } finally {
                                 semaphores.get(topic).release(); // Rilascia il semaforo
                             }
+                        	 });
+                        	 childThread.start();
                             break options;
                         }
                             
                         case "listall":{
+                        	 Thread childThread = new Thread(() -> {
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
-
-                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            
                             try {
+                            	semaphores.get(topic).acquire(); // Acquisisci il semaforo
                                 String message = topics.listAll(topic);
                                 to.println(message.trim());
-                            } finally {
+                            } catch (InterruptedException e) {								
+								e.printStackTrace();
+							} finally {
                                 semaphores.get(topic).release(); // Rilascia il semaforo
                             }
+                        	 });
+                        	 childThread.start();
                             break options;
                         }
                         
@@ -214,16 +238,21 @@ public class ClientHandler implements Runnable, ResourceListener {
                             break;
                             
                         case "listall":
+                        	Thread childThread = new Thread(() -> {
                             if (semaphores.get(topic).availablePermits() == 0) {
                                 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                             }
-
-                            semaphores.get(topic).acquire(); // Acquisisci il semaforo
+                            
                             try {
+                            	semaphores.get(topic).acquire(); // Acquisisci il semaforo
                                 to.println(topics.listAll(topic));
-                            } finally {
+                            } catch (InterruptedException e) {								
+								e.printStackTrace();
+							} finally {
                                 semaphores.get(topic).release(); // Rilascia il semaforo
                             }
+                        	});
+                        	childThread.start();
                             break options;
                             
                         default:
