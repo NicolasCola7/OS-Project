@@ -12,10 +12,12 @@ public class SocketListener implements Runnable {
     private ServerSocket server;
     private ArrayList<Thread> children = new ArrayList<>();
     private HashMap<String, Semaphore> semaphores; // Mappa per gestire i semafori per i topic
+    private Resource sharedResource;
 
-    public SocketListener(ServerSocket server, HashMap<String, Semaphore> semaphores) {
+    public SocketListener(ServerSocket server, HashMap<String, Semaphore> semaphores, Resource resource) {
         this.server = server;
         this.semaphores = semaphores; // Inizializzazione dei semafori
+        this.sharedResource = resource;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class SocketListener implements Runnable {
                         System.out.println("Client connected");
 
                         // Crea un nuovo thread per gestire il client connesso
-                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores));
+                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores, sharedResource));
                         handlerThread.start();
                         this.children.add(handlerThread);
                     } else {

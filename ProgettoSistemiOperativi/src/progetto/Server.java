@@ -7,10 +7,10 @@ import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
 public class Server {
-
-    private static Resource topics = ClientHandler.topics;
+	
     private static final HashMap<String, Semaphore> semaphores = new HashMap<>(); // Semaforo binario per gestire l'accesso ai topic
-
+    private static  Resource topics = new Resource();
+    
     private static void gestisciInspect(String topic, Scanner from) {
         boolean closed = false;
         while (!closed) {
@@ -78,7 +78,8 @@ public class Server {
              * Deleghiamo a un altro thread la gestione di tutte le connessioni client;
              * Nel thread principale gestiamo la console del server
              */
-            Thread serverThread = new Thread(new SocketListener(serverSocket, semaphores));
+           
+            Thread serverThread = new Thread(new SocketListener(serverSocket, semaphores, topics));
             serverThread.start();
 
             String input = "";

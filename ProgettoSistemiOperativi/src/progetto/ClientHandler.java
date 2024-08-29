@@ -11,15 +11,16 @@ import java.util.concurrent.Semaphore;
 public class ClientHandler implements Runnable, ResourceListener {
 
     private Socket s;
-    public static Resource topics = new Resource();
+    public  Resource topics;
     private boolean subscriberActive = false; // Variabile di stato per il subscriber
     private String subscriberTopic;
     private HashMap<String, Semaphore> semaphores; 
 
-    public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores) {
+    public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores, Resource resource) {
         this.s = s;
         this.semaphores = semaphores;
-        
+        this.topics = resource;
+       
         topics.addListener(this); // Registrazione come listener
     }
 
