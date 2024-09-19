@@ -12,8 +12,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 
     private Socket s;
     public  Resource topics;
-    private boolean subscriberActive = false; // Variabile di stato per il subscriber
-    private String subscriberTopic;
+    private String chosenTopic;
     private HashMap<String, Semaphore> semaphores; 
 
     public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores, Resource resource) {
@@ -21,7 +20,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
         this.semaphores = semaphores;
         this.topics = resource;
        
-        topics.addListener(this); // Registrazione come listener
+      
     }
 
     @Override
@@ -47,17 +46,20 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         
                         case "publish":{
                             if (parts.length > 1) {
-                                String topic = parts[1];
+                                chosenTopic = parts[1].trim();
+                                
                                 if (!topics.containsTopic(parts[1])) {
-                                    topics.add(topic);
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' non precedentemente esistente è stato creato");                                    
-                                    semaphores.put(topic, new Semaphore(1)); // Aggiungi un semaforo binario per il topic
-                                    gestisciPublisher(topic);
-                                } else {
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + topic + "' precedentemente esistente");
-                                    gestisciPublisher(topic);
-                                }
+                                    topics.add(chosenTopic);                
+                                    semaphores.put(chosenTopic, new Semaphore(1)); // Aggiungi un semaforo binario per il topic  
+                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
+                                } 
+                                
+                                else
+                                	 to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' precedentemente esistente");
+                                
+                                gestisciPublisher();
                             }
+                            
                             break;
                         }
                         
@@ -69,13 +71,14 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         
                         case "subscribe":{
                             if (parts.length > 1) {
-                                String topic = parts[1];
+                               
                                 if (topics.containsTopic(parts[1])) {
-                                    to.println("Accesso come Subscriber avvenuto con successo al topic " + topic);
-                                    subscriberTopic = topic;
-                                    gestisciSubscriber(topic);
+                                	chosenTopic = parts[1];
+                                	topics.addSubscriber(this); // Registrazione come listener
+                                    to.println("Accesso come Subscriber avvenuto con successo al topic " + chosenTopic);
+                                    gestisciSubscriber();
                                 } else {
-                                    to.println("Accesso come Subscriber fallito, il topic " + topic + " non esiste");
+                                    to.println("Accesso come Subscriber fallito, il topic " + chosenTopic + " non esiste");
                                 }
                             }
                             break;
@@ -102,7 +105,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
         }
     }
 
-    public void gestisciPublisher(String topic) throws InterruptedException {
+    public void gestisciPublisher() throws InterruptedException {
         try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
@@ -125,32 +128,35 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             // Creazione del thread figlio
                             Thread childThread = new Thread(() -> {
                                 // Codice da eseguire nel thread figlio
-                            	if (semaphores.get(topic).availablePermits() == 0) {
+                            	if (semaphores.get(chosenTopic).availablePermits() == 0) {
                                     to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                                 }
 
                                 if (parts.length > 1) {
-                                    try {
-										semaphores.get(topic).acquire();
+                                   
+                                	try {
+										semaphores.get(chosenTopic).acquire();// Acquisisci il semaforo
 									} catch (InterruptedException e) {										
 										e.printStackTrace();
-									} // Acquisisci il semaforo
+									} 
+                                    
                                     try {
                                         String message = "";
+                                       
                                         for (int i = 1; i < parts.length; i++) {
                                             message += parts[i] + " ";
                                         }
 
-                                        Message messageFinal = new Message(topics.getPuntatoreByTopic(topic), message);
-                                        topics.addMessageToTopic(topic, messageFinal);
+                                        Message messageFinal = new Message(topics.getPuntatoreByTopic(chosenTopic), message, this.hashCode());
+                                        topics.addMessageToTopic(chosenTopic, messageFinal);
                                         currentClientMessages.add(messageFinal);
                                         to.println("Messaggio inviato con successo sul topic");
                                     } finally {
-                                        semaphores.get(topic).release(); // Rilascia il semaforo
+                                        semaphores.get(chosenTopic).release(); // Rilascia il semaforo
                                     }
-                                }                               
-                               
+                                }                                  
                             });
+                            
                             childThread.start(); 
                             break options;                         
                             
@@ -158,45 +164,48 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 
                         
                         case "list":{
-                        	 Thread childThread = new Thread(() -> {
-                            if (semaphores.get(topic).availablePermits() == 0) {
-                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            }
-
-                            try {
-								semaphores.get(topic).acquire();
-							} catch (InterruptedException e) {								
-								e.printStackTrace();
-							} // Acquisisci il semaforo
-                            try {
-                                String message = topics.list(currentClientMessages);
-                                to.println(message.trim());
-                            } finally {
-                                semaphores.get(topic).release(); // Rilascia il semaforo
-                            }
+                        	Thread childThread = new Thread(() -> {
+                           
+                        		if (semaphores.get(chosenTopic).availablePermits() == 0) 
+                        			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        		 
+                        		 try {
+                        			 semaphores.get(chosenTopic).acquire();// Acquisisci il semaforo
+                        		 } catch (InterruptedException e) {								
+                        			 e.printStackTrace();
+                        		 } 
+		                        
+                        		 try {
+                        			 String message = topics.list(this, chosenTopic);
+                        			 to.println(message.trim());
+                        		 } finally {
+                        			 semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        		 }
                         	 });
+                        	 
                         	 childThread.start();
-                            break options;
+                        	 break options;
                         }
                             
                         case "listall":{
                         	 Thread childThread = new Thread(() -> {
-                            if (semaphores.get(topic).availablePermits() == 0) {
-                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            }
+                        		 if (semaphores.get(chosenTopic).availablePermits() == 0) {
+                        			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        		 }
                             
-                            try {
-                            	semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                String message = topics.listAll(topic);
-                                to.println(message.trim());
-                            } catch (InterruptedException e) {								
-								e.printStackTrace();
-							} finally {
-                                semaphores.get(topic).release(); // Rilascia il semaforo
-                            }
+                        		 try {
+                        			 semaphores.get(chosenTopic).acquire(); // Acquisisci il semaforo
+                        			 String message = topics.listAll(chosenTopic);
+                        			 to.println(message.trim());
+                        		 } catch (InterruptedException e) {								
+                        			 e.printStackTrace();
+                        		 } finally {
+                        			 semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        		 }
                         	 });
+                        	 
                         	 childThread.start();
-                            break options;
+                        	 break options;
                         }
                         
                         default:
@@ -217,8 +226,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
         }
     }
 
-    public void gestisciSubscriber(String topic) throws InterruptedException {
-        subscriberActive = true; // Imposta lo stato attivo per il subscriber
+    public void gestisciSubscriber() throws InterruptedException {
         try {
             Scanner from = new Scanner(s.getInputStream());
             PrintWriter to = new PrintWriter(s.getOutputStream(), true);
@@ -239,19 +247,20 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             
                         case "listall":
                         	Thread childThread = new Thread(() -> {
-                            if (semaphores.get(topic).availablePermits() == 0) {
-                                to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                            }
+                        		if (semaphores.get(chosenTopic).availablePermits() == 0) {
+                        			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+                        		}
                             
-                            try {
-                            	semaphores.get(topic).acquire(); // Acquisisci il semaforo
-                                to.println(topics.listAll(topic));
-                            } catch (InterruptedException e) {								
-								e.printStackTrace();
-							} finally {
-                                semaphores.get(topic).release(); // Rilascia il semaforo
-                            }
+                        		try {
+                        			semaphores.get(chosenTopic).acquire(); // Acquisisci il semaforo
+                        			to.println(topics.listAll(chosenTopic));
+                        		} catch (InterruptedException e) {								
+                        			e.printStackTrace();
+                        		} finally {
+                        			semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        		}
                         	});
+                        	
                         	childThread.start();
                             break options;
                             
@@ -270,14 +279,12 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
             e.printStackTrace();
-        } finally {
-            subscriberActive = false; // Imposta lo stato come inattivo per il subscriber
         }
     }
 
     @Override
-    public void onValueAdded(String key, Message value) {
-        if (subscriberActive && key.equals(subscriberTopic)) {
+    public void onMessageAdded(String key, Message value) {
+        if (key.equals(chosenTopic)) {
             try {
                 PrintWriter to = new PrintWriter(s.getOutputStream(), true);
                 to.println("Nuovo messaggio sul topic " + key + ":\n" + value);

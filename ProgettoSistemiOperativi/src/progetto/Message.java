@@ -7,11 +7,13 @@ public class Message {
     int id;
     LocalDateTime date;
     String text;
+    int publisherId;
     
-    public Message(int id, String text) {
+    public Message(int id, String text, int publisherId) {
         this.id = id;
         this.text = text;
         this.date = LocalDateTime.now();
+        this.publisherId = publisherId;
     }
     
     public int getId() {

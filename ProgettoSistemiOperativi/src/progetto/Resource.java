@@ -8,12 +8,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Resource {
     private HashMap<String, ArrayList<Message>> topics;
-    private List<ResourceListener> listeners;
+    private List<ResourceListener> subscribers;
     private ConcurrentHashMap<String, AtomicInteger> topicCounters; // Contatori per ogni topic
     
     public Resource() {
         this.topics = new HashMap<>();
-        this.listeners = new ArrayList<>();
+        this.subscribers = new ArrayList<>();
         this.topicCounters = new ConcurrentHashMap<>();
     }
     
@@ -24,7 +24,6 @@ public class Resource {
     	
     }
     
-
     public synchronized String show() {
         StringBuilder allTopics = new StringBuilder();
         for (String topic : topics.keySet()) {
@@ -53,15 +52,19 @@ public class Resource {
     	}
     }
 
-    public synchronized String list(ArrayList<Message> currentClientMessages) {
-        StringBuilder message = new StringBuilder();
-        if(!currentClientMessages.isEmpty()) {
-            message.append("MESSAGGI:\n");
-            for (Message msg : currentClientMessages) {
-                message.append(msg).append("\n");
-            }   
-        }
-        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();
+    public synchronized String list(ClientHandler publisher, String topic) {
+    	synchronized(topics.get(topic)) {
+	        StringBuilder message = new StringBuilder();
+	        ArrayList<Message> result = this.topics.get(topic);
+	        if(!topics.get(topic).isEmpty()) {
+		        message.append("MESSAGGI:\n");
+		        for (Message msg : result) {
+		        	if(msg.publisherId == publisher.hashCode())
+		        		message.append(msg).append("\n");
+		        }
+		    }
+	        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();
+    	}
     }
 
     public synchronized boolean containsTopic(String topic) {
@@ -76,19 +79,19 @@ public class Resource {
 	        msg.setId(messageId);
 	        
 	        this.topics.get(topic).add(msg);
-	        notifyListeners(topic, msg); // Notifica i listener quando viene aggiunto un valore
+	        notifySubscribers(topic, msg); // Notifica i subscriber quando viene aggiunto un messaggio
     	}
     }
     
-    // Aggiungi un listener
-    public synchronized void addListener(ResourceListener listener) {
-        listeners.add(listener);
+    // Aggiungi un subscriber
+    public synchronized void addSubscriber(ResourceListener listener) {
+        subscribers.add(listener);
     }
 
-    // Notifica i listener
-    private void notifyListeners(String topic, Message msg) {
-        for (ResourceListener listener : listeners) {
-            listener.onValueAdded(topic, msg);
+    // Notifica i subscriber
+    private void notifySubscribers(String topic, Message msg) {
+        for (ResourceListener listener : subscribers) {
+            listener.onMessageAdded(topic, msg);
         }
     }
     
@@ -125,9 +128,4 @@ public class Resource {
 		    return null;
     	}
     }
-}
-
-//Interfaccia per i listener
-interface ResourceListener {
- void onValueAdded(String key, Message value);
 }
