@@ -3,9 +3,11 @@ package progetto;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 public class ClientHandler extends Thread implements Runnable, ResourceListener {
@@ -13,7 +15,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
     private Socket s;
     public  Resource topics;
     private String chosenTopic;
-    private HashMap<String, Semaphore> semaphores; 
+    private AbstractMap<String,Semaphore> semaphores; 
 
     public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores, Resource resource) {
         this.s = s;
@@ -41,6 +43,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                        
                         case "quit":{
                             closed = true;
+                            from.close();
                             break;
                         }
                         

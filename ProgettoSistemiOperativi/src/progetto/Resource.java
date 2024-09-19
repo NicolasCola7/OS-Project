@@ -39,7 +39,7 @@ public class Resource {
     }
 
     public String listAll(String topic) throws InterruptedException {
-    	synchronized(topics.get(topic)) {
+    
 		    ArrayList<Message> result = this.topics.get(topic);
 		    StringBuilder message = new StringBuilder();
 		    if(!topics.get(topic).isEmpty()) {
@@ -49,11 +49,10 @@ public class Resource {
 		        }
 		    }
 		    return message.isEmpty() ? "Non sono ancora stati inviati messaggi sul topic" : message.toString();
-    	}
+    	
     }
 
-    public synchronized String list(ClientHandler publisher, String topic) {
-    	synchronized(topics.get(topic)) {
+    public synchronized String list(ClientHandler publisher, String topic) {   	
 	        StringBuilder message = new StringBuilder();
 	        ArrayList<Message> result = this.topics.get(topic);
 	        if(!topics.get(topic).isEmpty()) {
@@ -63,24 +62,21 @@ public class Resource {
 		        		message.append(msg).append("\n");
 		        }
 		    }
-	        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();
-    	}
+	        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();   	
     }
 
     public synchronized boolean containsTopic(String topic) {
 		return this.topics.containsKey(topic);
     }
 
-    public void addMessageToTopic(String topic, Message msg){
-    	synchronized(topics.get(topic)) {
+    public void addMessageToTopic(String topic, Message msg){   	
 	        // Ottieni il contatore per il topic specifico e incrementalo
 	        AtomicInteger counter = this.topicCounters.get(topic);
 	        int messageId = counter.getAndIncrement();
 	        msg.setId(messageId);
 	        
 	        this.topics.get(topic).add(msg);
-	        notifySubscribers(topic, msg); // Notifica i subscriber quando viene aggiunto un messaggio
-    	}
+	        notifySubscribers(topic, msg); // Notifica i subscriber quando viene aggiunto un messaggio   	
     }
     
     // Aggiungi un subscriber

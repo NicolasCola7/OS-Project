@@ -22,6 +22,7 @@ public class Receiver implements Runnable {
                 String response = from.nextLine();
                 System.out.println(response);
                 if (response.equals("quit")) {
+                	from.close();
                     break;
                 }
 
