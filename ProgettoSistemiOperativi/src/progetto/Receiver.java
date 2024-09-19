@@ -2,6 +2,7 @@ package progetto;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Receiver implements Runnable {
@@ -30,7 +31,11 @@ public class Receiver implements Runnable {
         } catch (IOException e) {
             System.err.println("IOException caught: " + e);
             e.printStackTrace();
-        } finally {
+        }
+        catch (NoSuchElementException e ) {
+        	System.err.println("Closed");
+        }
+        finally {
             System.out.println("Receiver closed.");
             this.sender.interrupt();
         }

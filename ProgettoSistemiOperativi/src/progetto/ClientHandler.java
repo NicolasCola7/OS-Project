@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -105,6 +106,9 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+        catch (NoSuchElementException e ) {
+        	System.err.println("Closed");
         }
     }
 
