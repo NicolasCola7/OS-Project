@@ -52,7 +52,7 @@ public class Resource {
     	
     }
 
-    public synchronized String list(ClientHandler publisher, String topic) {   	
+    public String list(ClientHandler publisher, String topic) {   	
 	        StringBuilder message = new StringBuilder();
 	        ArrayList<Message> result = this.topics.get(topic);
 	        if(!topics.get(topic).isEmpty()) {

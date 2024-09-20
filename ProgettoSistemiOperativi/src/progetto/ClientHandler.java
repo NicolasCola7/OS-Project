@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.Semaphore;
 
 public class ClientHandler extends Thread implements Runnable, ResourceListener {
@@ -16,9 +16,9 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
     private Socket s;
     public  Resource topics;
     private String chosenTopic;
-    private AbstractMap<String,Semaphore> semaphores; 
+    private AbstractMap<String,ReentrantReadWriteLock> semaphores; 
 
-    public ClientHandler(Socket s, HashMap<String, Semaphore> semaphores, Resource resource) {
+    public ClientHandler(Socket s, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource) {
         this.s = s;
         this.semaphores = semaphores;
         this.topics = resource;
@@ -54,7 +54,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                                 
                                 if (!topics.containsTopic(parts[1])) {
                                     topics.add(chosenTopic);                
-                                    semaphores.put(chosenTopic, new Semaphore(1)); // Aggiungi un semaforo binario per il topic  
+                                    semaphores.put(chosenTopic, new ReentrantReadWriteLock()); // Aggiungi un lock per il topic  
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
                                 } 
                                 
@@ -135,19 +135,14 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             // Creazione del thread figlio
                             Thread childThread = new Thread(() -> {
                                 // Codice da eseguire nel thread figlio
-                            	if (semaphores.get(chosenTopic).availablePermits() == 0) {
+                            	if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) {
                                     to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                                 }
 
                                 if (parts.length > 1) {
-                                   
-                                	try {
-										semaphores.get(chosenTopic).acquire();// Acquisisci il semaforo
-									} catch (InterruptedException e) {										
-										e.printStackTrace();
-									} 
-                                    
+                                                                 	                                    
                                     try {
+                                    	semaphores.get(chosenTopic).writeLock().lock();// Acquisisci il semaforo
                                         String message = "";
                                        
                                         for (int i = 1; i < parts.length; i++) {
@@ -159,7 +154,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                                         currentClientMessages.add(messageFinal);
                                         to.println("Messaggio inviato con successo sul topic");
                                     } finally {
-                                        semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                                        semaphores.get(chosenTopic).writeLock().unlock(); // Rilascia il semaforo
                                     }
                                 }                                  
                             });
@@ -173,20 +168,15 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         case "list":{
                         	Thread childThread = new Thread(() -> {
                            
-                        		if (semaphores.get(chosenTopic).availablePermits() == 0) 
-                        			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-                        		 
-                        		 try {
-                        			 semaphores.get(chosenTopic).acquire();// Acquisisci il semaforo
-                        		 } catch (InterruptedException e) {								
-                        			 e.printStackTrace();
-                        		 } 
+                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) 
+                        			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");                      		                       		
 		                        
                         		 try {
+                        			 semaphores.get(chosenTopic).readLock().lock();// Acquisisci il semaforo
                         			 String message = topics.list(this, chosenTopic);
                         			 to.println(message.trim());
                         		 } finally {
-                        			 semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        			 semaphores.get(chosenTopic).readLock().unlock(); // Rilascia il semaforo
                         		 }
                         	 });
                         	 
@@ -196,18 +186,18 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             
                         case "listall":{
                         	 Thread childThread = new Thread(() -> {
-                        		 if (semaphores.get(chosenTopic).availablePermits() == 0) {
+                        		 if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) {
                         			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                         		 }
                             
                         		 try {
-                        			 semaphores.get(chosenTopic).acquire(); // Acquisisci il semaforo
+                        			 semaphores.get(chosenTopic).readLock().lock(); // Acquisisci il semaforo
                         			 String message = topics.listAll(chosenTopic);
                         			 to.println(message.trim());
                         		 } catch (InterruptedException e) {								
                         			 e.printStackTrace();
                         		 } finally {
-                        			 semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        			 semaphores.get(chosenTopic).readLock().unlock(); // Rilascia il semaforo
                         		 }
                         	 });
                         	 
@@ -254,17 +244,17 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             
                         case "listall":
                         	Thread childThread = new Thread(() -> {
-                        		if (semaphores.get(chosenTopic).availablePermits() == 0) {
+                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) { //!!!!!!
                         			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                         		}
                             
                         		try {
-                        			semaphores.get(chosenTopic).acquire(); // Acquisisci il semaforo
+                        			semaphores.get(chosenTopic).readLock().lock(); // Acquisisci il semaforo
                         			to.println(topics.listAll(chosenTopic));
                         		} catch (InterruptedException e) {								
                         			e.printStackTrace();
                         		} finally {
-                        			semaphores.get(chosenTopic).release(); // Rilascia il semaforo
+                        			semaphores.get(chosenTopic).readLock().unlock(); // Rilascia il semaforo
                         		}
                         	});
                         	

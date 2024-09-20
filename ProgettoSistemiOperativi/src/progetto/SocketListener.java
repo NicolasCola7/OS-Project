@@ -6,15 +6,15 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class SocketListener implements Runnable {
     private ServerSocket server;
     private ArrayList<Thread> children = new ArrayList<>();
-    private HashMap<String, Semaphore> semaphores; // Mappa per gestire i semafori per i topic
+    private HashMap<String, ReentrantReadWriteLock> semaphores; // Mappa per gestire i semafori per i topic
     private Resource sharedResource;
 
-    public SocketListener(ServerSocket server, HashMap<String, Semaphore> semaphores, Resource resource) {
+    public SocketListener(ServerSocket server, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource) {
         this.server = server;
         this.semaphores = semaphores; // Inizializzazione dei semafori
         this.sharedResource = resource;
