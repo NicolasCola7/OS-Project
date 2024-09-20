@@ -28,10 +28,9 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 
     @Override
     public void run() {
-        try {
-            Scanner from = new Scanner(s.getInputStream());
-            PrintWriter to = new PrintWriter(s.getOutputStream(), true);
-
+        try (Scanner from = new Scanner(s.getInputStream());
+    		 PrintWriter to = new PrintWriter(s.getOutputStream(), true)){
+     
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
             boolean closed = false;
@@ -99,7 +98,6 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             }
 
             to.println("quit");
-            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
@@ -113,9 +111,10 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
     }
 
     public void gestisciPublisher() throws InterruptedException {
-        try {
-            Scanner from = new Scanner(s.getInputStream());
-            PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+        try(Scanner from = new Scanner(s.getInputStream());
+        	PrintWriter to = new PrintWriter(s.getOutputStream(), true)	) {
+            
+           
             ArrayList<Message> currentClientMessages = new ArrayList<Message>();
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
@@ -215,7 +214,6 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             }
 
             to.println("quit");
-            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
@@ -224,9 +222,9 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
     }
 
     public void gestisciSubscriber() throws InterruptedException {
-        try {
-            Scanner from = new Scanner(s.getInputStream());
-            PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+        try (Scanner from = new Scanner(s.getInputStream());
+             PrintWriter to = new PrintWriter(s.getOutputStream(), true)) {
+            
 
             System.out.println("Thread " + Thread.currentThread() + " listening...");
 
@@ -271,7 +269,6 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             }
 
             to.println("quit");
-            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
@@ -282,8 +279,8 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
     @Override
     public void onMessageAdded(String key, Message value) {
         if (key.equals(chosenTopic)) {
-            try {
-                PrintWriter to = new PrintWriter(s.getOutputStream(), true);
+            try ( PrintWriter to = new PrintWriter(s.getOutputStream(), true)){
+               
                 to.println("Nuovo messaggio sul topic " + key + ":\n" + value);
             } catch (IOException e) {
                 e.printStackTrace();
