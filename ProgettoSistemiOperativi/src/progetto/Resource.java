@@ -91,7 +91,7 @@ public class Resource {
         }
     }
     
-    public synchronized int getSize(String topic) {
+    public int getSize(String topic) {
     	synchronized(topics.get(topic)) {
     		return this.topics.get(topic).size();
     	}

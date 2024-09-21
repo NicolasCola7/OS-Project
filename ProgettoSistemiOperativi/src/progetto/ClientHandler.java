@@ -35,6 +35,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 
             boolean closed = false;
             while (!closed) {
+            	if(from.hasNextLine()) {
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
                     System.out.println(request);
@@ -42,8 +43,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                     switch (parts[0]) {
                        
                         case "quit":{
-                            closed = true;
-                            from.close();
+                            closed = true;                         
                             break;
                         }
                         
@@ -95,6 +95,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                     to.println("quit");
                     break;
                 }
+            	}
             }
 
             to.println("quit");
