@@ -53,9 +53,11 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                                 chosenTopic = parts[1].trim();
                                 
                                 if (!topics.containsTopic(parts[1])) {
-                                    topics.add(chosenTopic);                
+                                    topics.add(chosenTopic);  
+                                    synchronized(semaphores) {
                                     semaphores.put(chosenTopic, new ReentrantReadWriteLock()); // Aggiungi un lock per il topic  
                                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
+                                    }
                                 } 
                                 
                                 else
@@ -138,7 +140,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             // Creazione del thread figlio
                             Thread childThread = new Thread(() -> {
                                 // Codice da eseguire nel thread figlio
-                            	if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) {
+                            	if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) {
                                     to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                                 }
 
@@ -171,7 +173,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         case "list":{
                         	Thread childThread = new Thread(() -> {
                            
-                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) 
+                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) 
                         			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");                      		                       		
 		                        
                         		 try {
@@ -189,7 +191,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             
                         case "listall":{
                         	 Thread childThread = new Thread(() -> {
-                        		 if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) {
+                        		 if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) {
                         			 to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                         		 }
                             
@@ -248,7 +250,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             
                         case "listall":
                         	Thread childThread = new Thread(() -> {
-                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectFlag) { //!!!!!!
+                        		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) { 
                         			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
                         		}
                             

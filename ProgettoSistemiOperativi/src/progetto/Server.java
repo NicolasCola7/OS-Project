@@ -5,13 +5,15 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Server {
 	
     private static final HashMap<String, ReentrantReadWriteLock> semaphores = new HashMap<>(); // Semaforo binario per gestire l'accesso ai topic
     private static  Resource topics = new Resource();
-    protected static boolean inspectFlag = false;
+    protected static ReentrantLock inspectLock = new ReentrantLock();
     
     private static void gestisciInspect(String topic, Scanner from) {
         boolean closed = false;
@@ -109,12 +111,12 @@ public class Server {
 
                             try {                           	
                                 semaphore.writeLock().lock();  // Acquisisce il semaforo per bloccare i client
-                                inspectFlag = true;
+                                inspectLock.lock();
                                 gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
                             } catch (Exception e) {
                                 e.printStackTrace();
                             } finally {
-                            	inspectFlag = false;
+                            	inspectLock.unlock();
                                 semaphore.writeLock().unlock();  // Rilascia il semaforo                              
                             }
                             break;
