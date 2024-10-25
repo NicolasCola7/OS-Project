@@ -107,13 +107,11 @@ public class Resource {
     }   
     
     public Message containId(String topic, int id) {
-    	synchronized(topics.get(topic)) {
-		    for (int i = 0; i < topics.get(topic).size(); i++) {
-		        if(topics.get(topic).get(i).getId() == id) {
-		            return topics.get(topic).get(i);
-		        }
-		    }
-		    return null;
-    	}
-    }
+	    for (int i = 0; i < topics.get(topic).size(); i++) {
+	        if(topics.get(topic).get(i).getId() == id) {
+	            return topics.get(topic).get(i);
+	        }
+	    }
+	    return null;
+	}
 }
