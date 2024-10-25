@@ -91,12 +91,6 @@ public class Resource {
         }
     }
     
-    public int getSize(String topic) {
-    	synchronized(topics.get(topic)) {
-    		return this.topics.get(topic).size();
-    	}
-    }
-
     public int remove(String topic, int id) {
     	synchronized(topics.get(topic)) {
 		    if(this.topics.get(topic).size() > 0) {
