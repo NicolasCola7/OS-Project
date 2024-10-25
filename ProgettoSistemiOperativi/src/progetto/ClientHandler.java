@@ -246,6 +246,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                     
                         case "quit":
                             closed = true;
+                            topics.removeSubscriber(this);
                             break;
                             
                         case "listall":

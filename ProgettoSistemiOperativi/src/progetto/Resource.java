@@ -114,4 +114,8 @@ public class Resource {
 	    }
 	    return null;
 	}
+    
+    public synchronized void removeSubscriber(ResourceListener listener) {
+        subscribers.remove(listener);
+    }
 }
