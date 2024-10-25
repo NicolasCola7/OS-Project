@@ -92,20 +92,18 @@ public class Resource {
     }
     
     public int remove(String topic, int id) {
-    	synchronized(topics.get(topic)) {
-		    if(this.topics.get(topic).size() > 0) {
-		        Message messaggio = containId(topic, id);
-		        if(messaggio != null) {
-		            int messageIndex = topics.get(topic).indexOf(messaggio);
-		            this.topics.get(topic).remove(messageIndex);
-		            return 1;
-		        } else {
-		            return 2;
-		        }
-		    } else {
-		        return 0;
-		    }
-    	}
+	    if(this.topics.get(topic).size() > 0) {
+	        Message messaggio = containId(topic, id);
+	        if(messaggio != null) {
+	            int messageIndex = topics.get(topic).indexOf(messaggio);
+	            this.topics.get(topic).remove(messageIndex);
+	            return 1;
+	        } else {
+	            return 2;
+	        }
+	    } else {
+	        return 0;
+	    }
     }   
     
     public Message containId(String topic, int id) {
