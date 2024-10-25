@@ -111,7 +111,7 @@ public class Server {
 
                             try {                           	
                                 semaphore.writeLock().lock();  // Acquisisce il semaforo per bloccare i client
-                                inspectLock.lock();
+                                inspectLock.lock();           //Lock che funge da flag per verificare se l'ispezione è attiva
                                 gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
                             } catch (Exception e) {
                                 e.printStackTrace();

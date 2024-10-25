@@ -24,7 +24,7 @@ public class Resource {
     	
     }
     
-    public synchronized String show() {
+    public synchronized String show() { //!!!!!!!!
         StringBuilder allTopics = new StringBuilder();
         for (String topic : topics.keySet()) {
             allTopics.append("-" + topic).append("\n");
