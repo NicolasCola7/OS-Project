@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -103,11 +101,6 @@ public class Server {
                         if (parts.length > 1 && topics.containsTopic(parts[1])) {
                             String topic = parts[1];
                             ReentrantReadWriteLock semaphore = semaphores.get(topic);
-
-                            if (semaphore == null) {
-                                semaphore = new ReentrantReadWriteLock();
-                                semaphores.put(topic, semaphore);
-                            }
 
                             try {                           	
                                 semaphore.writeLock().lock();  // Acquisisce il semaforo per bloccare i client

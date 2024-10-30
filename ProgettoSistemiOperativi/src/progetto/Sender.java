@@ -15,7 +15,8 @@ public class Sender implements Runnable {
 
    @Override
    public void run() {
-       Scanner userInput = new Scanner(System.in);
+       
+	   Scanner userInput = new Scanner(System.in);
 
        try {
            PrintWriter to = new PrintWriter(this.s.getOutputStream(), true);

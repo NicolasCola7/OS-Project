@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.Semaphore;
 
 public class ClientHandler extends Thread implements Runnable, ResourceListener {
 
@@ -22,8 +21,6 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
         this.s = s;
         this.semaphores = semaphores;
         this.topics = resource;
-       
-      
     }
 
     @Override
@@ -52,18 +49,17 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             if (parts.length > 1) {
                                 chosenTopic = parts[1].trim();
                                 
-                                if (!topics.containsTopic(parts[1])) {
-                                    topics.add(chosenTopic);  
-                                    synchronized(semaphores) {
-                                    semaphores.put(chosenTopic, new ReentrantReadWriteLock()); // Aggiungi un lock per il topic  
-                                    to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
-                                    }
-                                } 
+                                synchronized(topics) {
+		                            if (!topics.containsTopic(parts[1])) {
+		                                topics.add(chosenTopic);  
+		                                semaphores.put(chosenTopic, new ReentrantReadWriteLock()); // Aggiungi un lock per il topic  
+		                                to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
+	                            	} 
+		                            else
+		                            	 to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' precedentemente esistente");
                                 
-                                else
-                                	 to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' precedentemente esistente");
-                                
-                                gestisciPublisher();
+		                            gestisciPublisher();
+                                }
                             }
                             
                             break;
