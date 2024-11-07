@@ -13,7 +13,7 @@ public class Server {
     private static  Resource topics = new Resource();
     protected static ReentrantLock inspectLock = new ReentrantLock();
     
-    private static void gestisciInspect(String topic, Scanner from) {
+    private static void manageInspect(String topic, Scanner from) {
         boolean closed = false;
         while (!closed) {
             String request = from.nextLine();
@@ -104,7 +104,7 @@ public class Server {
                             try {                           	
                                 semaphore.writeLock().lock();  // Acquisisce il semaforo per bloccare i client
                                 inspectLock.lock();           //Lock che funge da flag per verificare se l'ispezione è attiva
-                                gestisciInspect(topic, userInput);  // Funzione che ispeziona il topic
+                                manageInspect(topic, userInput);  // Funzione che ispeziona il topic
                             } catch (Exception e) {
                                 e.printStackTrace();
                             } finally {

@@ -58,7 +58,7 @@ public class ClientHandler implements Runnable, ResourceListener {
 		                            else
 		                            	 to.println("Accesso come Publisher avvenuto con successo al topic '" + chosenTopic + "'");
                                 }
-                                gestisciPublisher();
+                                managePublisher();
                             }
                             
                             break;
@@ -77,7 +77,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                 	chosenTopic = parts[1];
                                 	topics.addSubscriber(this); // Registrazione come listener
                                     to.println("Accesso come Subscriber avvenuto con successo al topic " + chosenTopic);
-                                    gestisciSubscriber();
+                                    manageSubscriber();
                                 } else {
                                     to.println("Accesso come Subscriber fallito, il topic " + parts[1] + " non esiste");
                                 }
@@ -111,7 +111,7 @@ public class ClientHandler implements Runnable, ResourceListener {
         }
     }
 
-    public void gestisciPublisher() throws InterruptedException {
+    public void managePublisher() throws InterruptedException {
         try {
         	Scanner from = new Scanner(s.getInputStream());
         	PrintWriter to = new PrintWriter(s.getOutputStream(), true);
@@ -149,7 +149,7 @@ public class ClientHandler implements Runnable, ResourceListener {
                                             message += parts[i] + " ";
                                         }
 
-                                        Message messageFinal = new Message(topics.getPuntatoreByTopic(chosenTopic), message, this.hashCode());
+                                        Message messageFinal = new Message(topics.getPointerByTopic(chosenTopic), message, this.hashCode());
                                         topics.addMessageToTopic(chosenTopic, messageFinal);
                                         currentClientMessages.add(messageFinal);
                                         to.println("Messaggio inviato con successo sul topic");
@@ -221,7 +221,7 @@ public class ClientHandler implements Runnable, ResourceListener {
         }
     }
 
-    public void gestisciSubscriber() throws InterruptedException {
+    public void manageSubscriber() throws InterruptedException {
         try {
         	Scanner from = new Scanner(s.getInputStream());
              PrintWriter to = new PrintWriter(s.getOutputStream(), true);

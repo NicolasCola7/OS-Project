@@ -32,7 +32,7 @@ public class Resource {
         return allTopics.isEmpty() ? "Nessun topic esistente" : "TOPICS:\n" + allTopics.toString().trim();
     }
     
-    public int getPuntatoreByTopic(String topic) {
+    public int getPointerByTopic(String topic) {
     	synchronized(topics.get(topic)) {
     		return this.topicCounters.get(topic).get();
     	}
