@@ -1,4 +1,4 @@
-package progetto;
+package server;
 
 public interface ResourceListener {
 	

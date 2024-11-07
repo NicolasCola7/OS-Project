@@ -1,4 +1,4 @@
-package progetto;
+package server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ClientHandler extends Thread implements Runnable, ResourceListener {
+public class ClientHandler implements Runnable, ResourceListener {
 
     private Socket s;
     public  Resource topics;
@@ -56,10 +56,9 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 		                                to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente è stato creato");
 	                            	} 
 		                            else
-		                            	 to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' precedentemente esistente");
-                                
-		                            gestisciPublisher();
+		                            	 to.println("Accesso come Publisher avvenuto con successo al topic '" + chosenTopic + "'");
                                 }
+                                gestisciPublisher();
                             }
                             
                             break;
@@ -80,7 +79,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                                     to.println("Accesso come Subscriber avvenuto con successo al topic " + chosenTopic);
                                     gestisciSubscriber();
                                 } else {
-                                    to.println("Accesso come Subscriber fallito, il topic " + chosenTopic + " non esiste");
+                                    to.println("Accesso come Subscriber fallito, il topic " + parts[1] + " non esiste");
                                 }
                             }
                             break;
@@ -99,7 +98,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
 
             to.println("quit");
             from.close();
-           // s.close();
+            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
@@ -126,7 +125,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                 if (!Thread.interrupted()) {
                     System.out.println(request);
                     String[] parts = request.trim().split(" ");
-                    options:
+                    
                     switch (parts[0]) {
                         case "quit":
                             closed = true;
@@ -161,7 +160,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                             });
                             
                             childThread.start(); 
-                            break options;                         
+                            break;                         
                             
                         }
 
@@ -182,7 +181,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         	 });
                         	 
                         	 childThread.start();
-                        	 break options;
+                        	 break;
                         }
                             
                         case "listall":{
@@ -195,15 +194,13 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         			 semaphores.get(chosenTopic).readLock().lock(); // Acquisisci il semaforo
                         			 String message = topics.listAll(chosenTopic);
                         			 to.println(message.trim());
-                        		 } catch (InterruptedException e) {								
-                        			 e.printStackTrace();
                         		 } finally {
                         			 semaphores.get(chosenTopic).readLock().unlock(); // Rilascia il semaforo
                         		 }
                         	 });
                         	 
                         	 childThread.start();
-                        	 break options;
+                        	 break;
                         }
                         
                         default:
@@ -216,7 +213,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             }
 
             to.println("quit");
-           // s.close();
+            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);
@@ -237,7 +234,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                 String request = from.nextLine();
                 if (!Thread.interrupted()) {
                     String[] parts = request.trim().split(" ");
-                    options:
+                    
                     switch (parts[0]) {
                     
                         case "quit":
@@ -254,15 +251,13 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
                         		try {
                         			semaphores.get(chosenTopic).readLock().lock(); // Acquisisci il semaforo
                         			to.println(topics.listAll(chosenTopic));
-                        		} catch (InterruptedException e) {								
-                        			e.printStackTrace();
                         		} finally {
                         			semaphores.get(chosenTopic).readLock().unlock(); // Rilascia il semaforo
                         		}
                         	});
                         	
                         	childThread.start();
-                            break options;
+                            break;
                             
                         default:
                             to.println("Unknown cmd");
@@ -274,7 +269,7 @@ public class ClientHandler extends Thread implements Runnable, ResourceListener 
             }
 
             to.println("quit");
-           // s.close();
+            s.close();
             System.out.println("Closed");
         } catch (IOException e) {
             System.err.println("ClientHandler: IOException caught: " + e);

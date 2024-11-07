@@ -1,4 +1,4 @@
-package progetto;
+package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -24,17 +24,16 @@ public class Server {
             }
             String command = parts[0];
             switch (command) {
-                case "end":
+                
+            	case "end":
                     closed = true;
                     break;
+                    
                 case "listall":
-                    try {
-                        String allMessage = topics.listAll(topic);
-                        System.out.println(allMessage);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+					String allMessage = topics.listAll(topic);
+					System.out.println(allMessage);
                     break;
+                    
                 case "delete":
                     if (parts.length > 1) {
                         try {
@@ -54,6 +53,7 @@ public class Server {
                         System.out.println("Error: delete requires an id argument");
                     }
                     break;
+                    
                 default:
                     System.out.println("Unknown cmd: " + command); // Debug
             }
@@ -62,8 +62,7 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        args = new String[1];
-        args[0] = "9000";
+       
         if (args.length < 1) {
             System.err.println("Usage: java Server <port>");
             return;

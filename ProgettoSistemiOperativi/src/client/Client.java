@@ -1,16 +1,12 @@
-package progetto;
+package client;
 
-import java.io.*;
-import java.net.*;
 
 import java.io.IOException;
 import java.net.Socket;
 
 public class Client {
    public static void main(String[] args) {
-	   args = new String[2];
-       args[1]= "9000";
-       args[0]= "127.0.0.1";
+	   
 	   if (args.length < 2) {
            System.err.println("Usage: java Client <host> <port>");
            return;

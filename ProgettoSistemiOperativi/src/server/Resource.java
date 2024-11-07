@@ -1,4 +1,4 @@
-package progetto;
+package server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,11 +20,11 @@ public class Resource {
     public synchronized void add(String topic) {
 	    ArrayList<Message> value = new ArrayList<>();
 	    this.topics.put(topic, value);
-	    this.topicCounters.put(topic, new AtomicInteger(0)); // Inizializza il contatore per il nuovo topic
+	    this.topicCounters.put(topic, new AtomicInteger(0));
     	
     }
     
-    public synchronized String show() { //!!!!!!!!
+    public synchronized String show() {
         StringBuilder allTopics = new StringBuilder();
         for (String topic : topics.keySet()) {
             allTopics.append("-" + topic).append("\n");
@@ -38,18 +38,17 @@ public class Resource {
     	}
     }
 
-    public String listAll(String topic) throws InterruptedException {
-    
-		    ArrayList<Message> result = this.topics.get(topic);
-		    StringBuilder message = new StringBuilder();
-		    if(!topics.get(topic).isEmpty()) {
-		        message.append("MESSAGGI:\n");
-		        for (Message msg : result) {
-		            message.append(msg).append("\n");
-		        }
-		    }
-		    return message.isEmpty() ? "Non sono ancora stati inviati messaggi sul topic" : message.toString();
-    	
+    public String listAll(String topic){
+	    ArrayList<Message> result = this.topics.get(topic);
+	    StringBuilder message = new StringBuilder();
+	    if(!topics.get(topic).isEmpty()) {
+	        message.append("MESSAGGI:\n");
+	        for (Message msg : result) {
+	            message.append(msg).append("\n");
+	        }
+	    }
+	    return message.isEmpty() ? "Non sono ancora stati inviati messaggi sul topic" : message.toString();
+
     }
 
     public String list(ClientHandler publisher, String topic) {   	
@@ -76,7 +75,7 @@ public class Resource {
 	        msg.setId(messageId);
 	        
 	        this.topics.get(topic).add(msg);
-	        notifySubscribers(topic, msg); // Notifica i subscriber quando viene aggiunto un messaggio   	
+	        notifySubscribers(topic, msg);    	
     }
     
     // Aggiungi un subscriber
