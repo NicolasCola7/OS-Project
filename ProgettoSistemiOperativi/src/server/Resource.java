@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Resource {
     private HashMap<String, ArrayList<Message>> topics;
-    private List<ResourceListener> subscribers;
+    private List<ClientHandler> subscribers;
     private ConcurrentHashMap<String, AtomicInteger> topicCounters; // Contatori per ogni topic
     
     public Resource() {
@@ -52,16 +52,16 @@ public class Resource {
     }
 
     public String list(ClientHandler publisher, String topic) {   	
-	        StringBuilder message = new StringBuilder();
-	        ArrayList<Message> result = this.topics.get(topic);
-	        if(!topics.get(topic).isEmpty()) {
-		        message.append("MESSAGGI:\n");
-		        for (Message msg : result) {
-		        	if(msg.publisherId == publisher.hashCode())
-		        		message.append(msg).append("\n");
-		        }
-		    }
-	        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();   	
+        StringBuilder message = new StringBuilder();
+        ArrayList<Message> result = this.topics.get(topic);
+        if(!topics.get(topic).isEmpty()) {
+	        message.append("MESSAGGI:\n");
+	        for (Message msg : result) {
+	        	if(msg.publisherId == publisher.hashCode())
+	        		message.append(msg).append("\n");
+	        }
+	    }
+        return message.isEmpty() ? "Non hai ancora inviato messaggi sul topic" : message.toString();   	
     }
 
     public synchronized boolean containsTopic(String topic) {
@@ -69,24 +69,28 @@ public class Resource {
     }
 
     public void addMessageToTopic(String topic, Message msg){   	
-	        // Ottieni il contatore per il topic specifico e incrementalo
-	        AtomicInteger counter = this.topicCounters.get(topic);
-	        int messageId = counter.getAndIncrement();
-	        msg.setId(messageId);
-	        
-	        this.topics.get(topic).add(msg);
-	        notifySubscribers(topic, msg);    	
+        // Ottieni il contatore per il topic specifico e incrementalo
+        AtomicInteger counter = this.topicCounters.get(topic);
+        int messageId = counter.getAndIncrement();
+        msg.setId(messageId);
+        
+        this.topics.get(topic).add(msg);
+        notifySubscribers(topic, msg);    	
     }
     
     // Aggiungi un subscriber
-    public synchronized void addSubscriber(ResourceListener listener) {
-        subscribers.add(listener);
+    public synchronized void addSubscriber(ClientHandler subscriber) {
+        subscribers.add(subscriber);
+    }
+    
+    public synchronized void removeSubscriber(ClientHandler subscriber) {
+        subscribers.remove(subscriber);
     }
 
     // Notifica i subscriber
     private void notifySubscribers(String topic, Message msg) {
-        for (ResourceListener listener : subscribers) {
-            listener.onMessageAdded(topic, msg);
+        for (ClientHandler suscriber : subscribers) {
+        	suscriber.getMessageAdded(topic, msg);
         }
     }
     
@@ -113,8 +117,5 @@ public class Resource {
 	    }
 	    return null;
 	}
-    
-    public synchronized void removeSubscriber(ResourceListener listener) {
-        subscribers.remove(listener);
-    }
+ 
 }
