@@ -5,6 +5,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
+/**
+ * Thread per l'invio di messaggi
+ */
 public class Sender implements Runnable {
 
    Socket s;

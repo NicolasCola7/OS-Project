@@ -7,7 +7,9 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+/**
+ * Thred per la gestione di tutte le connessioni client
+ */
 public class SocketListener implements Runnable {
     private ServerSocket server;
     private ArrayList<Thread> children = new ArrayList<>();

@@ -5,6 +5,9 @@ import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+/**
+ * Thread per la ricezione di messaggi
+ */
 public class Receiver implements Runnable {
 
     Socket s;

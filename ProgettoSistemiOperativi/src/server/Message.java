@@ -3,6 +3,10 @@ package server;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Definizione struttura di un messaggio e metodi di supporto.
+ */
+
 public class Message {
     int id;
     LocalDateTime date;
