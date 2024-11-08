@@ -3,18 +3,17 @@ package server;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Resource {
     private HashMap<String, ArrayList<Message>> topics;
     private List<ClientHandler> subscribers;
-    private ConcurrentHashMap<String, AtomicInteger> topicCounters; // Contatori per ogni topic
+    private HashMap<String, AtomicInteger> topicCounters; // Contatori per ogni topic
     
     public Resource() {
         this.topics = new HashMap<>();
         this.subscribers = new ArrayList<>();
-        this.topicCounters = new ConcurrentHashMap<>();
+        this.topicCounters = new HashMap<>();
     }
     
     public synchronized void add(String topic) {
@@ -69,7 +68,6 @@ public class Resource {
     }
 
     public void addMessageToTopic(String topic, Message msg){   	
-        // Ottieni il contatore per il topic specifico e incrementalo
         AtomicInteger counter = this.topicCounters.get(topic);
         int messageId = counter.getAndIncrement();
         msg.setId(messageId);

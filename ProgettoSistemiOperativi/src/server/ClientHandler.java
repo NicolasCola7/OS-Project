@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClientHandler implements Runnable {
     private Socket s;
-    public  Resource topics;
+    public Resource topics;
     private String chosenTopic;
     private HashMap<String,ReentrantReadWriteLock> semaphores; 
     private Scanner from;
@@ -77,8 +77,7 @@ public class ClientHandler implements Runnable {
 		            break;
 		        
 		        case "show":
-		            String allTopics = topics.show();
-		            to.println(allTopics);
+		            to.println(topics.show());
 		            break;
 		        
 		        case "subscribe":
@@ -207,7 +206,7 @@ public class ClientHandler implements Runnable {
      */
     private void executeCommand(Runnable command, boolean isWrite) {
     	new Thread(() -> {
-    		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) 
+    		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.getHoldCount() == 1) 
     			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
     		
     		try {

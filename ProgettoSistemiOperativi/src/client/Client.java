@@ -19,7 +19,7 @@ public class Client {
            Socket s = new Socket(host, port);
            System.out.println("Connected to server");
 
-           System.out.println("Inserisci la modalità in cui vuoi operare e il relativo topic");
+           System.out.println("Inserisci la modalita' in cui vuoi operare e il relativo topic");
 
            /*
             * Delega la gestione di input/output a due thread separati, uno per inviare

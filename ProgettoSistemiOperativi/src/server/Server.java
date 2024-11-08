@@ -9,11 +9,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Server {
 	
-    private static final HashMap<String, ReentrantReadWriteLock> semaphores = new HashMap<>(); // Semaforo binario per gestire l'accesso ai topic
+    private static final HashMap<String, ReentrantReadWriteLock> semaphores = new HashMap<>(); 
     private static  Resource topics = new Resource();
     protected static ReentrantLock inspectLock = new ReentrantLock();
     
     private static void manageInspect(String topic, Scanner from) {
+    	inspectLock.lock(); 
+    	System.out.println("Attivata sessione di ispezione sul topic " + topic);
+    	
         boolean closed = false;
         while (!closed) {
             String request = from.nextLine();
@@ -27,6 +30,7 @@ public class Server {
                 
             	case "end":
                     closed = true;
+                    inspectLock.unlock();
                     break;
                     
                 case "listall":
@@ -91,8 +95,7 @@ public class Server {
 
                 switch (parts[0]) {
                     case "show": {
-                        String allTopic = topics.show();
-                        System.out.println(allTopic);
+                        System.out.println(topics.show());
                         break;
                     }
 
@@ -102,14 +105,12 @@ public class Server {
                             ReentrantReadWriteLock semaphore = semaphores.get(topic);
 
                             try {                           	
-                                semaphore.writeLock().lock();  // Acquisisce il semaforo per bloccare i client
-                                inspectLock.lock();           //Lock che funge da flag per verificare se l'ispezione è attiva
-                                manageInspect(topic, userInput);  // Funzione che ispeziona il topic
+                                semaphore.writeLock().lock(); 
+                                manageInspect(topic, userInput);  
                             } catch (Exception e) {
                                 e.printStackTrace();
                             } finally {
-                            	inspectLock.unlock();
-                                semaphore.writeLock().unlock();  // Rilascia il semaforo                              
+                                semaphore.writeLock().unlock();                             
                             }
                             break;
                         } else if (parts.length > 1 && !topics.containsTopic(parts[1])) {
