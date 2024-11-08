@@ -11,7 +11,7 @@ public class Server {
 	
     private static final HashMap<String, ReentrantReadWriteLock> semaphores = new HashMap<>(); 
     private static  Resource topics = new Resource();
-    protected static ReentrantLock inspectLock = new ReentrantLock();
+    protected static final HashMap<String, ReentrantLock> inspectLocks = new HashMap<>();
     private static Scanner userInput;
     
     /**
@@ -19,7 +19,7 @@ public class Server {
      * @param topic è il topic ispezionato
      */
     private static void manageInspect(String topic) {
-    	inspectLock.lock(); 
+    	inspectLocks.get(topic).lock(); 
     	System.out.println("Attivata sessione di ispezione sul topic " + topic);
     	
         boolean inspectEnd = false;
@@ -35,7 +35,7 @@ public class Server {
                 
             	case "end":
             		inspectEnd = true;
-                    inspectLock.unlock();
+                    inspectLocks.get(topic).unlock();
                     break;
                     
                 case "listall":
