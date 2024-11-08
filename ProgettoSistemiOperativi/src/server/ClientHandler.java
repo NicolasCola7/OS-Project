@@ -206,7 +206,7 @@ public class ClientHandler implements Runnable {
      */
     private void executeCommand(Runnable command, boolean isWrite) {
     	new Thread(() -> {
-    		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.getHoldCount() == 1) 
+    		if (semaphores.get(chosenTopic).isWriteLocked() && Server.inspectLock.isLocked()) 
     			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
     		
     		try {
