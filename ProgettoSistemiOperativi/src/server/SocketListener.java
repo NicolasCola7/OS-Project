@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Thred per la gestione di tutte le connessioni client
@@ -15,11 +16,13 @@ public class SocketListener implements Runnable {
     private ArrayList<Thread> children = new ArrayList<>();
     private HashMap<String, ReentrantReadWriteLock> semaphores; // Mappa per gestire i semafori per i topic
     private Resource sharedResource;
+    private HashMap<String, ReentrantLock> inspectLocks;
 
-    public SocketListener(ServerSocket server, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource) {
+    public SocketListener(ServerSocket server, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap<String, ReentrantLock> inspectLocks) {
         this.server = server;
         this.semaphores = semaphores; // Inizializzazione dei semafori
         this.sharedResource = resource;
+        this.inspectLocks = inspectLocks;
     }
 
     @Override
@@ -34,7 +37,7 @@ public class SocketListener implements Runnable {
                         System.out.println("Client connected");
 
                         // Crea un nuovo thread per gestire il client connesso
-                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores, sharedResource));
+                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores, sharedResource, inspectLocks));
                         handlerThread.start();
                         this.children.add(handlerThread);
                     } else {

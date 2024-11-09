@@ -93,7 +93,7 @@ public class Server {
              * Nel thread principale gestiamo la console del server.
              */
            
-            Thread serverThread = new Thread(new SocketListener(serverSocket, semaphores, topics));
+            Thread serverThread = new Thread(new SocketListener(serverSocket, semaphores, topics, inspectLocks));
             serverThread.start();
 
             processServerCommands();
