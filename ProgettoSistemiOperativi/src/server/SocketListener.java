@@ -16,9 +16,9 @@ public class SocketListener implements Runnable {
     private ArrayList<Thread> children = new ArrayList<>();
     private HashMap<String, ReentrantReadWriteLock> semaphores; // Mappa per gestire i semafori per i topic
     private Resource sharedResource;
-    private HashMap<String, ReentrantLock> inspectLocks;
+    private HashMap<String, Boolean> inspectLocks;
 
-    public SocketListener(ServerSocket server, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap<String, ReentrantLock> inspectLocks) {
+    public SocketListener(ServerSocket server, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap<String, Boolean> inspectLocks) {
         this.server = server;
         this.semaphores = semaphores; // Inizializzazione dei semafori
         this.sharedResource = resource;

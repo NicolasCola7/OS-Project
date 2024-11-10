@@ -14,12 +14,12 @@ public class ClientHandler implements Runnable {
     public Resource topics;
     private String chosenTopic;
     private HashMap<String,ReentrantReadWriteLock> semaphores; 
-    private HashMap <String, ReentrantLock> inspectLocks;
+    private HashMap <String, Boolean> inspectLocks;
     private Scanner from;
     private PrintWriter to;
     private boolean closed;
 
-    public ClientHandler(Socket s, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap <String, ReentrantLock> inspectLocks) {
+    public ClientHandler(Socket s, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap <String, Boolean> inspectLocks) {
         this.s = s;
         this.semaphores = semaphores;
         this.topics = resource;
@@ -105,7 +105,7 @@ public class ClientHandler implements Runnable {
                 if (!topics.containsTopic(parts[1])) {
                     topics.add(chosenTopic);  
                     semaphores.put(chosenTopic, new ReentrantReadWriteLock());  
-                    inspectLocks.put(chosenTopic, new ReentrantLock());
+                    inspectLocks.put(chosenTopic, false);
                     to.println("Accesso come Publisher avvenuto con successo. \nIl topic '" + chosenTopic + "' non precedentemente esistente e' stato creato");
             	} 
                 else
@@ -210,7 +210,7 @@ public class ClientHandler implements Runnable {
      */
     private void executeCommand(Runnable command, boolean isWrite) {
     	new Thread(() -> {
-    		if (semaphores.get(chosenTopic).isWriteLocked() && inspectLocks.get(chosenTopic).isLocked()) 
+    		if (semaphores.get(chosenTopic).isWriteLocked() && inspectLocks.get(chosenTopic) == true) 
     			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
     		
     		try {
