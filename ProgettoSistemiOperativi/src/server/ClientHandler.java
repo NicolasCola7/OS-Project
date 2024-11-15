@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClientHandler implements Runnable {
@@ -66,7 +65,6 @@ public class ClientHandler implements Runnable {
      * @param request è il comando scritto dall'utente, composto da "command  topic" o solo "command"
      */
     private void processClient(String request) {
-    	System.out.println(request);
         String[] parts = request.trim().split(" ");
         if (parts.length > 0) {
 		    switch (parts[0]) {
@@ -86,7 +84,17 @@ public class ClientHandler implements Runnable {
 		        case "subscribe":
 		            processSubscriber(parts);
 		            break;
-		        
+		        case "commands":
+		        	to.println("Comandi client:\n"
+		        			   + "- 'publish <topic>':\n"
+		        			   + "\tregistra il client come publisher per il topic specificato. Se il topic non esiste, viene creato:\n"
+		        			   + "- 'show':\n"
+		        			   + "\tmostra tutti i topic disponibili nel sistema. Restituisce l'elenco dei topic esistenti.\n"
+		        			   + "- 'subscribe <topic>':\n"
+		        			   + "\tregistra il client come subscriber per il topic specificato"
+		        			   + "- 'quit'\n"
+		        			   + "\ttermina l'esecuzione del client.");
+		        	break;
 		        default:
 		            to.println("Unknown cmd");
 		    }
@@ -141,7 +149,6 @@ public class ClientHandler implements Runnable {
         while (!closed) {
             String request = from.nextLine();
             if (!Thread.interrupted()) {
-                System.out.println(request);
                 String[] parts = request.trim().split(" ");
                 
                 switch (parts[0]) {
@@ -161,7 +168,17 @@ public class ClientHandler implements Runnable {
                     case "listall":
                     	executeCommand(() -> listAllMessages(), false);
                     	break;     
-                    
+                    case "commands":
+                    	to.println("Comandi publisher:\n"
+                    			  + "- 'send' <message>:\n"
+                    			  + "\tinvia un messaggio sul topic scelto.\n"
+                    			  + "- 'list':\n "
+                    			  + "\tmostra i messaggi inviati dal client corrente sul topic scelto.\n"
+                    			  + "- 'listall':\n"
+                    			  + "\tmostra tutti i messaggi inviati da tutti i publisher sul topic scelto.\n"
+                    			  + "- 'quit':\n"
+                    			  + "\ttermina l'esecuzione del client");
+                    	break;
                     default:
                         to.println("Unknown cmd");
                 }
@@ -191,6 +208,13 @@ public class ClientHandler implements Runnable {
                     case "listall":
                     	executeCommand(() -> listAllMessages(), false);
                     	break;  
+                    case "commands":
+                    	to.println("Comandi subscriber\n"
+                    			   + "- 'listall':\n"
+                  			  	   + "\tmostra tutti i messaggi inviati da tutti i publisher sul topic scelto.\n"
+                  			  	   + "- 'quit':\n"
+                  			       + "\ttermina l'esecuzione del client");
+                    	break;
                     	
                     default:
                         to.println("Unknown cmd");

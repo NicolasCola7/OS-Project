@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Server {
@@ -62,6 +61,15 @@ public class Server {
                         System.out.println("Error: delete requires an id argument");
                     }
                     break;
+                case "commands":
+                	System.out.println("Comandi sessione inspect:\n"
+    						+ "- 'end':\n"
+    					    + "\tTermina la sessione di ispezione.\n"
+    					    + "- 'listall':\n"
+    				        + "\tMostra tutti i messaggi del topic in ispezione.\n"
+    					    + "- 'delete <id>':\n"
+    					    + "\tElimina un messaggio specifico, identificato da id");
+                	break;
                     
                 default:
                     System.out.println("Unknown cmd: " + command); 
@@ -160,6 +168,16 @@ public class Server {
                         break;
                     }
                 }
+                case "commands": 
+                	System.out.println("Lista dei comandi:\n"
+                						+ "- 'quit':\n"
+                						+ "\tTermina l'esecuzione del server.\n"
+                						+ "- 'show':\n"
+                						+ "\tMostra tutti i topic disponibili nell'applicazione.\n"
+                						+ "- 'inspect <topic>': \n"
+                						+ "\tAvvia una sessione di ispezione per un topic.\n");
+                		break;
+                
 
                 default:
                     System.out.println("Unknown cmd");
