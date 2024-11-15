@@ -10,18 +10,18 @@ import java.util.Scanner;
  */
 public class Receiver implements Runnable {
 
-    Socket s;
+    Socket socket;
     Thread sender;
 
-    public Receiver(Socket s, Thread sender) {
-        this.s = s;
+    public Receiver(Socket socket, Thread sender) {
+        this.socket = socket;
         this.sender = sender;
     }
 
     @Override
     public void run() {
         try {
-            Scanner from = new Scanner(this.s.getInputStream());
+            Scanner from = new Scanner(this.socket.getInputStream());
             while (true) {
                 String response = from.nextLine();
                 System.out.println(response);

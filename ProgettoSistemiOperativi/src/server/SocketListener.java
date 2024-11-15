@@ -32,16 +32,16 @@ public class SocketListener implements Runnable {
             System.out.println("Waiting for a new client...");
             while (!Thread.interrupted()) {
                 try {
-                    Socket s = this.server.accept();
+                    Socket socket = this.server.accept();
                     if (!Thread.interrupted()) {
                         System.out.println("Client connected");
 
                         // Crea un nuovo thread per gestire il client connesso
-                        Thread handlerThread = new Thread(new ClientHandler(s, semaphores, sharedResource, inspectLocks));
+                        Thread handlerThread = new Thread(new ClientHandler(socket, semaphores, sharedResource, inspectLocks));
                         handlerThread.start();
                         this.children.add(handlerThread);
                     } else {
-                        s.close();
+                        socket.close();
                         break;
                     }
                 } catch (SocketTimeoutException e) {

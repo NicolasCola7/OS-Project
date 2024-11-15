@@ -10,10 +10,10 @@ import java.util.Scanner;
  */
 public class Sender implements Runnable {
 
-   Socket s;
+   Socket socket;
 
-   public Sender(Socket s) {
-       this.s = s;
+   public Sender(Socket socket) {
+       this.socket = socket;
    }
 
    @Override
@@ -22,7 +22,7 @@ public class Sender implements Runnable {
 	   Scanner userInput = new Scanner(System.in);
 
        try {
-           PrintWriter to = new PrintWriter(this.s.getOutputStream(), true);
+           PrintWriter to = new PrintWriter(this.socket.getOutputStream(), true);
            while (true) {
                String request = userInput.nextLine();
                /*

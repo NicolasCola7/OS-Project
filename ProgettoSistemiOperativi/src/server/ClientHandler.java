@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClientHandler implements Runnable {
-    private Socket s;
+    private Socket socket;
     public Resource topics;
     private String chosenTopic;
     private HashMap<String,ReentrantReadWriteLock> semaphores; 
@@ -19,8 +19,8 @@ public class ClientHandler implements Runnable {
     private PrintWriter to;
     private boolean closed;
 
-    public ClientHandler(Socket s, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap <String, Boolean> inspectLocks) {
-        this.s = s;
+    public ClientHandler(Socket socket, HashMap<String, ReentrantReadWriteLock> semaphores, Resource resource, HashMap <String, Boolean> inspectLocks) {
+        this.socket = socket;
         this.semaphores = semaphores;
         this.topics = resource;
         this.inspectLocks = inspectLocks;
@@ -29,8 +29,8 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-        	from = new Scanner(s.getInputStream());
-    		to = new PrintWriter(s.getOutputStream(), true);
+        	from = new Scanner(socket.getInputStream());
+    		to = new PrintWriter(socket.getOutputStream(), true);
      
             System.out.println("Thread " + Thread.currentThread() + " listening...");
             
@@ -50,7 +50,7 @@ public class ClientHandler implements Runnable {
             
 	        to.println("quit");
 	        from.close();
-	        s.close();
+	        socket.close();
 	        System.out.println("Closed");
 	        
         } catch (IOException e) {
@@ -276,7 +276,7 @@ public class ClientHandler implements Runnable {
     public void getMessageAdded(String topic, Message msg) {
         if (topic.equals(chosenTopic)) {
             try {
-            	PrintWriter to = new PrintWriter(s.getOutputStream(), true);    
+            	PrintWriter to = new PrintWriter(socket.getOutputStream(), true);    
                 to.println("Nuovo messaggio sul topic " + topic + ":\n" + msg);
             } catch (IOException e) {
                 e.printStackTrace();
