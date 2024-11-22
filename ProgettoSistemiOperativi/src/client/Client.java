@@ -16,7 +16,7 @@ public class Client {
        int port = Integer.parseInt(args[1]);
 
        try {
-           Socket s = new Socket(host, port);
+           Socket socket = new Socket(host, port);
            System.out.println("Connected to server");
 
            System.out.println("Inserisci la modalita' in cui vuoi operare e il relativo topic");
@@ -25,8 +25,8 @@ public class Client {
             * Delega la gestione di input/output a due thread separati, uno per inviare
             * messaggi e uno per leggerli
             */
-           Thread sender = new Thread(new Sender(s));
-           Thread receiver = new Thread(new Receiver(s, sender));
+           Thread sender = new Thread(new Sender(socket));
+           Thread receiver = new Thread(new Receiver(socket, sender));
 
            sender.start();
            receiver.start();
@@ -35,7 +35,7 @@ public class Client {
                /* rimane in attesa che sender e receiver terminino la loro esecuzione */
                sender.join();
                receiver.join();
-               s.close();
+               socket.close();
                System.out.println("Socket closed.");
            } catch (InterruptedException e) {
                /*
