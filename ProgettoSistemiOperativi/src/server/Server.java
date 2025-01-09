@@ -129,7 +129,7 @@ public class Server {
     
     private static void processServerCommands() {
     	String input = "";
-    	boolean serverClosed=false;
+    	boolean serverClosed = false;
 
         while (!serverClosed) {
             input = userInput.nextLine();
@@ -137,7 +137,7 @@ public class Server {
 
             switch (parts[0]) {
             	case "quit":
-            		serverClosed=true;
+            		serverClosed = true;
             		return;
             		
                 case "show": {

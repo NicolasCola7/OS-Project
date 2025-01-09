@@ -34,6 +34,7 @@ public class ClientHandler implements Runnable {
             System.out.println("Thread " + Thread.currentThread() + " listening...");
             
             closed = false;
+            
             while (!closed) {
             	if(from.hasNextLine()) {
             		String request = from.nextLine();
@@ -84,6 +85,7 @@ public class ClientHandler implements Runnable {
 		        case "subscribe":
 		            processSubscriber(parts);
 		            break;
+		            
 		        case "commands":
 		        	to.println("Comandi client:\n"
 		        			   + "- 'publish <topic>':\n"
@@ -95,6 +97,7 @@ public class ClientHandler implements Runnable {
 		        			   + "- 'quit'\n"
 		        			   + "\ttermina l'esecuzione del client.");
 		        	break;
+		        	
 		        default:
 		            to.println("Unknown cmd");
 		    }
@@ -130,15 +133,16 @@ public class ClientHandler implements Runnable {
      */
     private void processSubscriber(String[] parts) {
     	if (parts.length > 1) {
-            
-            if (topics.containsTopic(parts[1])) {
-            	chosenTopic = parts[1];;
-            	topics.addSubscriber(this); 
-                to.println("Accesso come Subscriber avvenuto con successo al topic " + chosenTopic);
-                manageSubscriber();
-            } else {
-                to.println("Accesso come Subscriber fallito, il topic " + parts[1] + " non esiste");
-            }
+    		synchronized(topics) {
+	            if (!topics.containsTopic(parts[1])) {
+		             to.println("Accesso come Subscriber fallito, il topic " + parts[1] + " non esiste");
+		             return;
+	            }
+    		}
+    		chosenTopic = parts[1];
+        	topics.addSubscriber(this); 
+            to.println("Accesso come Subscriber avvenuto con successo al topic " + chosenTopic);
+    		manageSubscriber();
         }
     }
 
@@ -167,7 +171,8 @@ public class ClientHandler implements Runnable {
                     
                     case "listall":
                     	executeCommand(() -> listAllMessages(), false);
-                    	break;     
+                    	break; 
+                    	
                     case "commands":
                     	to.println("Comandi publisher:\n"
                     			  + "- 'send' <message>:\n"
@@ -179,6 +184,7 @@ public class ClientHandler implements Runnable {
                     			  + "- 'quit':\n"
                     			  + "\ttermina l'esecuzione del client");
                     	break;
+                    	
                     default:
                         to.println("Unknown cmd");
                 }
@@ -208,6 +214,7 @@ public class ClientHandler implements Runnable {
                     case "listall":
                     	executeCommand(() -> listAllMessages(), false);
                     	break;  
+                    	
                     case "commands":
                     	to.println("Comandi subscriber\n"
                     			   + "- 'listall':\n"
@@ -233,29 +240,27 @@ public class ClientHandler implements Runnable {
      * @param isWrite è un booleano che indica se il comando è un'operazione di lettura o scrittura.
      */
     private void executeCommand(Runnable command, boolean isWrite) {
-    	new Thread(() -> {
-    		if (semaphores.get(chosenTopic).isWriteLocked() && inspectLocks.get(chosenTopic) == true) 
-    			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
-    		
-    		try {
-    			
-    			if (isWrite) {
-    				semaphores.get(chosenTopic).writeLock().lock(); 
-    			} else {
-    				semaphores.get(chosenTopic).readLock().lock(); 
-    			}
-    			
-    			command.run();
-    			
-    		} finally {
-    			
-    			if (isWrite) {
-    				semaphores.get(chosenTopic).writeLock().unlock(); 
-    			} else {
-    				semaphores.get(chosenTopic).readLock().unlock(); 
-    			}
-    		}
-		}).start();
+		if (semaphores.get(chosenTopic).isWriteLocked() && inspectLocks.get(chosenTopic) == true) 
+			to.println("Sessione di ispezione attiva, il comando verrà eseguito appena terminerà...");
+		
+		try {
+			
+			if (isWrite) {
+				semaphores.get(chosenTopic).writeLock().lock(); 
+			} else {
+				semaphores.get(chosenTopic).readLock().lock(); 
+			}
+			
+			command.run();
+			
+		} finally {
+			
+			if (isWrite) {
+				semaphores.get(chosenTopic).writeLock().unlock(); 
+			} else {
+				semaphores.get(chosenTopic).readLock().unlock(); 
+			}
+		}
     }
     
     /**
@@ -270,7 +275,7 @@ public class ClientHandler implements Runnable {
 		        message += parts[i] + " ";
 		    }
 		
-		    Message messageFinal = new Message(topics.getPointerByTopic(chosenTopic), message, this.hashCode());
+		    Message messageFinal = new Message(topics.getNumberOfMessages(chosenTopic), message, this.hashCode());
 		    topics.addMessageToTopic(chosenTopic, messageFinal);
 		    to.println("Messaggio inviato con successo sul topic");
     	}
@@ -289,7 +294,7 @@ public class ClientHandler implements Runnable {
      */
     private void listAllMessages() {
     	String message = topics.listAll(chosenTopic);
-		 to.println(message.trim());
+		to.println(message.trim());
     }
     
     /**
@@ -298,13 +303,7 @@ public class ClientHandler implements Runnable {
      * @param msg è il messaggio ricevuto
      */
     public void getMessageAdded(String topic, Message msg) {
-        if (topic.equals(chosenTopic)) {
-            try {
-            	PrintWriter to = new PrintWriter(socket.getOutputStream(), true);    
-                to.println("Nuovo messaggio sul topic " + topic + ":\n" + msg);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        if (topic.equals(chosenTopic)) 
+            to.println("Nuovo messaggio sul topic " + topic + ":\n" + msg);
     }
 }

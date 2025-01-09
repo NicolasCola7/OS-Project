@@ -12,22 +12,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Resource {
     private HashMap<String, ArrayList<Message>> topics;
     private List<ClientHandler> subscribers;
-    private HashMap<String, AtomicInteger> topicCounters; //Numero di messaggi per ogni topic.
+    private HashMap<String, AtomicInteger> messagesCounter; //Numero di messaggi per ogni topic.
     
     public Resource() {
         this.topics = new HashMap<>();
         this.subscribers = new ArrayList<>();
-        this.topicCounters = new HashMap<>();
+        this.messagesCounter = new HashMap<>();
     }
     
     /**
      * Aggiunge un nuovo topic alla lista.
      * @param topic è il topic aggiunto.
      */
-    public synchronized void add(String topic) {
-	    ArrayList<Message> value = new ArrayList<>();
-	    this.topics.put(topic, value);
-	    this.topicCounters.put(topic, new AtomicInteger(0));
+    public void add(String topic) {
+    	synchronized(topics) {
+		    ArrayList<Message> value = new ArrayList<>();
+		    this.topics.put(topic, value);
+		    this.messagesCounter.put(topic, new AtomicInteger(0));
+    	}
     	
     }
     
@@ -35,12 +37,14 @@ public class Resource {
      * Mostra i topic esistenti.
      * @return ritorna una stringa rappresentante i topic oppure "Nessun topic esistente".
      */
-    public synchronized String show() {
-        StringBuilder allTopics = new StringBuilder();
-        for (String topic : topics.keySet()) {
-            allTopics.append("-" + topic).append("\n");
-        }
-        return allTopics.isEmpty() ? "Nessun topic esistente" : "TOPICS:\n" + allTopics.toString().trim();
+    public String show() {
+    	synchronized(topics) {
+		    StringBuilder allTopics = new StringBuilder();
+		    for (String topic : topics.keySet()) {
+		        allTopics.append("-" + topic).append("\n");
+		    }
+		    return allTopics.isEmpty() ? "Nessun topic esistente" : "TOPICS:\n" + allTopics.toString().trim();
+    	}
     }
     
     /**
@@ -48,9 +52,9 @@ public class Resource {
      * @param topic
      * @return numero di messaggi
      */
-    public int getPointerByTopic(String topic) {
+    public int getNumberOfMessages(String topic) {
     	synchronized(topics.get(topic)) {
-    		return this.topicCounters.get(topic).get();
+    		return this.messagesCounter.get(topic).get();
     	}
     }
 
@@ -97,8 +101,10 @@ public class Resource {
      * @param topic
      * @return true se esiste, false se non esiste
      */
-    public synchronized boolean containsTopic(String topic) {
-		return this.topics.containsKey(topic);
+    public boolean containsTopic(String topic) {
+    	synchronized(topics) {
+    		return this.topics.containsKey(topic);
+    	}
     }
 
     /**
@@ -107,7 +113,7 @@ public class Resource {
      * @param msg è il messaggio da aggiungere
      */
     public void addMessageToTopic(String topic, Message msg){   	
-        AtomicInteger counter = this.topicCounters.get(topic);
+        AtomicInteger counter = this.messagesCounter.get(topic);
         int messageId = counter.getAndIncrement();
         msg.setId(messageId);
         
@@ -119,16 +125,20 @@ public class Resource {
      * Aggiunge un subscriber alla lista.
      * @param subscriber
      */
-    public synchronized void addSubscriber(ClientHandler subscriber) {
-        subscribers.add(subscriber);
+    public void addSubscriber(ClientHandler subscriber) {
+    	synchronized(subscribers) {
+    		subscribers.add(subscriber);
+    	}
     }
     
     /**
      * Rimuove un subscriber dalla lista.
      * @param subscriber
      */
-    public synchronized void removeSubscriber(ClientHandler subscriber) {
-        subscribers.remove(subscriber);
+    public void removeSubscriber(ClientHandler subscriber) {
+    	synchronized(subscribers) {
+        	subscribers.remove(subscriber);
+    	}
     }
 
     /**
